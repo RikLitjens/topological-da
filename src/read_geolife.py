@@ -5,7 +5,7 @@ import os.path
 import datetime
 import os
 
-def read_plt(plt_file):
+def read_plt(index, plt_file):
     points = pd.read_csv(plt_file, skiprows=6, header=None,
                          parse_dates=[[5, 6]], infer_datetime_format=True)
 
@@ -14,7 +14,9 @@ def read_plt(plt_file):
 
     # remove unused columns
     points.drop(inplace=True, columns=[2, 4])
-
+    
+    points['point_id']=index
+    
     return points
 
 mode_names = ['walk', 'bike', 'bus', 'car', 'subway','train', 'airplane', 'boat', 'run', 'motorcycle', 'taxi']
@@ -48,7 +50,7 @@ def read_user(user_folder):
     labels = None
 
     plt_files = glob.glob(os.path.join(user_folder, 'Trajectory', '*.plt'))
-    df = pd.concat([read_plt(f) for f in plt_files])
+    df = pd.concat([read_plt(c, f) for c, f in enumerate(plt_files)])
 
     labels_file = os.path.join(user_folder, 'labels.txt')
     if os.path.exists(labels_file):
