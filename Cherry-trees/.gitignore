@@ -315,4 +315,4 @@ pyrightconfig.json
 )'])
 
 # Data sets
-.cherry_trees/*
+cherry_trees/
