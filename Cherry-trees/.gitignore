@@ -318,4 +318,4 @@ pyrightconfig.json
 cherry_trees_data/
 
 # Configfiles
-config/*
+.config/config.ini
