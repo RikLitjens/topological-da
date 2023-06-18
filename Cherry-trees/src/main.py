@@ -1,5 +1,5 @@
-import open3d as o3d
-import helpers
+# import open3d as o3d
+# from helpers import load_point_cloud, visualize_point_cloud
 import configparser
 from super_points import *
 
