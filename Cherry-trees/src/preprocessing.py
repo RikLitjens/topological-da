@@ -40,5 +40,28 @@ def edge_evaluation(points, clusters, r_super):
 
 
         # Find rotation from x, y, z to x_axis_new, y_axis_new, a_axis_new
+        # Because the axes are unit vectors (1, 0, 0), (0, 1, 0) and (0, 0, 1), 
+        # the rotation matrix is equal to the new axes in order, transposed due to it being a rotation from new axes to old axes
+        rotation_matrix = np.matrix.transpose(np.array([x_axis_new, y_axis_new, z_axis_new]))
 
+        for i in range(len(total_cluster)):
+            total_cluster[i] = np.matmul(rotation_matrix, total_cluster[i])
+        
+        max_x = max(total_cluster[:, 0])
+        max_y = max(total_cluster[:, 1])
 
+        # Initialize the 32x16 histogram for the CNN
+        histogram = np.zeros((32, 16))
+        for i in range(len(total_cluster)):
+            greyscale_x = total_cluster[i][0] / max_x
+            greyscale_y = total_cluster[i][1] / max_y
+            
+            greyscale_x = int(greyscale_x * 32)
+            greyscale_y = int(greyscale_y * 16)
+
+            if greyscale_x > 31:
+                greyscale_x = 31
+            if greyscale_y > 15:
+                greyscale_y = 15
+            
+            histogram[greyscale_x][greyscale_y] += 1
