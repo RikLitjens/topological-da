@@ -15,13 +15,13 @@ def edge_evaluation(points, clusters, r_super):
                 edges.append(j, i)
     
     # Convert points to new coordinate system
-    for i in range(len(edges)):
-        n_i = points[edges[i][0]]
-        n_j = points[edges[i][1]]
+    for k in range(len(edges)):
+        n_i = points[edges[k][0]]
+        n_j = points[edges[k][1]]
 
-        cluster_i = clusters[edges[i][0]]
-        cluster_j = clusters[edges[i][1]]
-        total_cluster = cluster_i.extend(cluster_j)
+        cluster_i = clusters[edges[k][0]]
+        cluster_j = clusters[edges[k][1]]
+        total_cluster = cluster_k.extend(cluster_j)
 
         # X-axis is equal to the direction of the edge
         x_axis_new = normalize(n_j - n_i)
@@ -65,3 +65,11 @@ def edge_evaluation(points, clusters, r_super):
                 greyscale_y = 15
             
             histogram[greyscale_x][greyscale_y] += 1
+
+        # Normalize the histogram for a greyscale image
+        max_hist = 255 / np.amax(histogram)
+        histogram = histogram * max_hist
+
+        # Save the histogram to a file
+        plt.imshow(histogram, interpolation='nearest', cmap='gray')
+        plt.savefig(f"histogram_{k}.png")
