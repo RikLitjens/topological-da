@@ -2,6 +2,8 @@ from helpers import dist
 import math
 import numpy as np
 from sklearn.preprocessing import normalize
+import matplotlib.pyplot as plt
+from PIL import Image
 
 
 def edge_evaluation(points, clusters, r_super):
@@ -73,3 +75,6 @@ def edge_evaluation(points, clusters, r_super):
         # Save the histogram to a file
         plt.imshow(histogram, interpolation='nearest', cmap='gray')
         plt.savefig(f"histogram_{k}.png")
+
+        # img = Image.fromarray(decrypted.astype(np.uint8), 'L')
+        # img.save('decrypted2.png')
