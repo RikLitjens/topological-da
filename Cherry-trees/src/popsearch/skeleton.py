@@ -1,3 +1,10 @@
+from enum import Enum
+class LabelEnum(Enum):
+    TRUNK = 0
+    SUPPORT = 1
+    LEADER = 2
+    SIDE = 3
+
 class Skeleton:
     def __init__(self) -> None:
         self.edges = []
@@ -24,6 +31,16 @@ class Skeleton:
         
         return c_turn * (edge.angle_with(edge.pre) - theta) ** p_turn
     
-    def get_growth_penalty(self, edge):
+    def get_growth_penalty(self, edge, theta, c_grow, p_grow):
+        if edge.label in [LabelEnum.LEADER, LabelEnum.SUPPORT]:
+            return 0
+        if self.get_delta_target(edge) <= theta:
+            return 0
+        
+        return c_grow * (self.get_delta_target(edge) - theta) ** p_grow
+        
+    def get_delta_target(self, edge):
+        #todo
         pass
+        
 
