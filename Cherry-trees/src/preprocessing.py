@@ -33,7 +33,7 @@ def edge_evaluation(points, clusters, r_super):
         min_eigenvalue_index = min_eigenvalues[0]
 
         # The z-axis is equal to the 3rd least significant comoponent (eigenvector belonging to the third lowest eigenvalues)
-        z_axis_new = Vh[min_eigenvalue_index]
+        z_axis_new = U[min_eigenvalue_index]
 
         # The y-axis is then perpendicular to the x_axis_new - z_axis_new plane
         y_axis_new = np.cross(z_axis_new, x_axis_new)
