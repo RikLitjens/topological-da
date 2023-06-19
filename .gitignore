@@ -320,3 +320,6 @@ cherry_trees_data/
 
 # Configfiles
 Cherry-trees/config/config.ini
+
+# Ignore the generated images
+images/

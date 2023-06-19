@@ -9,6 +9,7 @@ from PIL import Image
 def edge_evaluation(points, clusters, r_super):
     edges = get_edges(points, r_super)
     
+    total_cluster = []
     # Convert points to new coordinate system
     for k in range(len(edges)):
         n_i = points[edges[k][0]]
@@ -29,25 +30,30 @@ def edge_evaluation(points, clusters, r_super):
             total_cluster[i] = np.matmul(rotation_matrix, total_cluster[i])
         
         max_x = max(total_cluster[:, 0])
+        min_x = min(total_cluster[:, 0])
         max_y = max(total_cluster[:, 1])
+        min_y = min(total_cluster[:, 1])
 
         # Initialize the 32x16 histogram for the CNN and normalize it to 0 - 255 (image color range)
-        histogram = make_greyscale(total_cluster, max_x, max_y)
+        histogram = make_greyscale(total_cluster, max_x, min_x, max_y, min_y)
 
         # Save the histogram to a file
-        plt.imshow(histogram, interpolation='nearest', cmap='gray')
-        plt.savefig(f"histogram_{k}.png")
+        # plt.imshow(histogram, interpolation='nearest', cmap='gray')
+        # plt.savefig(f"images\histogram_{k}.png")
 
-        # img = Image.fromarray(decrypted.astype(np.uint8), 'L')
-        # img.save('decrypted2.png')
+        img = Image.fromarray(histogram.astype(np.uint8), 'L')
+        img.save(f"Cherry-trees\images\histogram_{k}.png")
 
 def get_edges(points, r_super):
+    edges = []
     # Define the edges
     for i in range(len(points)):
         for j in range(i + 1, len(points)):
             if dist(points[i], points[j]) <= 2 * r_super:
                 edges.append([i, j])
                 edges.append([j, i])
+    
+    return edges
 
 def new_coord_system(p_o, p_t, total_cluster):
     # X-axis is equal to the direction of the edge
@@ -61,7 +67,7 @@ def new_coord_system(p_o, p_t, total_cluster):
 
     # The z-axis is equal to the 3rd least significant comoponent (eigenvector belonging to the third lowest eigenvalues)
     z_axis_n = U[min_eigenvalue_index]
-    z_axis_n = normalize([z_axis_new])[0]
+    z_axis_n = normalize([z_axis_n])[0]
 
     # The y-axis is then perpendicular to the x_axis_new - z_axis_new plane
     y_axis_new = np.cross(z_axis_n, x_axis_new)
@@ -72,11 +78,11 @@ def new_coord_system(p_o, p_t, total_cluster):
 
     return x_axis_new, y_axis_new, z_axis_new
 
-def make_greyscale(total_cluster, max_x, max_y):
+def make_greyscale(total_cluster, max_x, min_x, max_y, min_y):
     histogram = np.zeros((32, 16))
     for i in range(len(total_cluster)):
-        greyscale_x = total_cluster[i][0] / max_x
-        greyscale_y = total_cluster[i][1] / max_y
+        greyscale_x = (total_cluster[i][0] - min_x) / (max_x - min_x)
+        greyscale_y = (total_cluster[i][1] - min_y) / (max_y - min_y)
         
         greyscale_x = int(greyscale_x * 32)
         greyscale_y = int(greyscale_y * 16)
