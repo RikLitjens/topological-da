@@ -3,6 +3,7 @@ geolifePython7.pkl
 geolifePython10.pkl
 .venv
 src/__pycache__
+data/
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,pycharm
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode,pycharm
@@ -318,4 +319,4 @@ pyrightconfig.json
 cherry_trees_data/
 
 # Configfiles
-.config/config.ini
+Cherry-trees/config/config.ini
