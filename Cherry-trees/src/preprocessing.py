@@ -39,7 +39,7 @@ def edge_evaluation(points, clusters, r_super):
 
         # The y-axis is then perpendicular to the x_axis_new - z_axis_new plane
         y_axis_new = np.cross(z_axis_new, x_axis_new)
-
+        
 
         # Find rotation from x, y, z to x_axis_new, y_axis_new, a_axis_new
         # Because the axes are unit vectors (1, 0, 0), (0, 1, 0) and (0, 0, 1), 
