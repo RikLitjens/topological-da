@@ -1,4 +1,5 @@
 from enum import Enum
+import numpy as np
 class LabelEnum(Enum):
     TRUNK = 0
     SUPPORT = 1
@@ -39,7 +40,12 @@ class Skeleton:
         return c_grow * (self.get_delta_target(edge) - theta) ** p_grow
         
     def get_delta_target(self, edge):
-        #todo
-        pass
+        grow_angle = edge.angle_with_x()
+        if edge.label == LabelEnum.SUPPORT:
+            return grow_angle
+
+        if edge.label == LabelEnum.LEADER:
+            return np.pi / 2 - grow_angle
+
         
 
