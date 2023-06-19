@@ -1,0 +1,48 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="DuplicatedCode" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <Languages>
+        <language minSize="553" name="Python" />
+      </Languages>
+    </inspection_tool>
+    <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LatexLineBreak" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="LatexNonBreakingSpace" enabled="true" level="TEXT ATTRIBUTES" enabled_by_default="true" editorAttributes="INFO_ATTRIBUTES" />
+    <inspection_tool class="LatexTooLargeSection" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
+    <inspection_tool class="PyCompatibilityInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ourVersions">
+        <value>
+          <list size="2">
+            <item index="0" class="java.lang.String" itemvalue="3.9" />
+            <item index="1" class="java.lang.String" itemvalue="3.10" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="8">
+            <item index="0" class="java.lang.String" itemvalue="stack-data" />
+            <item index="1" class="java.lang.String" itemvalue="jupyter-console" />
+            <item index="2" class="java.lang.String" itemvalue="jsonpointer" />
+            <item index="3" class="java.lang.String" itemvalue="multidict" />
+            <item index="4" class="java.lang.String" itemvalue="grpcio" />
+            <item index="5" class="java.lang.String" itemvalue="jupyter-events" />
+            <item index="6" class="java.lang.String" itemvalue="jupyterlab-pygments" />
+            <item index="7" class="java.lang.String" itemvalue="prometheus-client" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="NomadRunLauncher.dagster" />
+          <option value="workflows.dagster_nomad.NomadRunLauncher" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
