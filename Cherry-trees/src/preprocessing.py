@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 
-def edge_evaluation(points, clusters, r_super):
+def edge_evaluation(points, clusters, r_super, bag):
     edges = get_edges(points, r_super)
     
     total_cluster = []
@@ -15,9 +15,12 @@ def edge_evaluation(points, clusters, r_super):
         n_i = points[edges[k][0]]
         n_j = points[edges[k][1]]
 
-        total_cluster = clusters[edges[k][0]]
-        total_cluster.extend(clusters[edges[k][1]])
-        total_cluster = np.array(total_cluster)
+        # total_cluster = clusters[edges[k][0]]
+        cluster_i = np.array(clusters[edges[k][0]])
+        cluster_j = np.array(clusters[edges[k][1]])
+        total_cluster = np.concatenate((clusters[edges[k][0]], clusters[edges[k][1]]), axis=0)
+        # total_cluster.extend(clusters[edges[k][1]])
+        # total_cluster = np.array(total_cluster)
 
         x_axis_new, y_axis_new, z_axis_new = new_coord_system(n_i, n_j, total_cluster)
 
@@ -42,7 +45,10 @@ def edge_evaluation(points, clusters, r_super):
         # plt.savefig(f"images\histogram_{k}.png")
 
         img = Image.fromarray(histogram.astype(np.uint8), 'L')
-        img.save(f"Cherry-trees\images\histogram_{k}.png")
+        img.save(fr"Cherry-trees\images\bag{bag}histogram_{k}.png")
+        print(f"Saved image {k}")
+
+        total_cluster = []
 
 def get_edges(points, r_super):
     edges = []
@@ -51,7 +57,7 @@ def get_edges(points, r_super):
         for j in range(i + 1, len(points)):
             if dist(points[i], points[j]) <= 2 * r_super:
                 edges.append([i, j])
-                edges.append([j, i])
+                # edges.append([j, i])
     
     return edges
 
@@ -84,6 +90,10 @@ def make_greyscale(total_cluster, max_x, min_x, max_y, min_y):
         greyscale_x = (total_cluster[i][0] - min_x) / (max_x - min_x)
         greyscale_y = (total_cluster[i][1] - min_y) / (max_y - min_y)
         
+        if (greyscale_x == None):
+            print(f"This x_position is {total_cluster[i][0]} but results in NaN")
+        if (greyscale_y == None):
+            print(f"This y_position is {total_cluster[i][1]} but results in NaN")
         greyscale_x = int(greyscale_x * 32)
         greyscale_y = int(greyscale_y * 16)
 
