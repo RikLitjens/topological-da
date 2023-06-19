@@ -53,6 +53,7 @@ for image_number in range(0, 200):
 
     # Plot image
     plt.imshow(np.asarray(Image.open(image_location)))
+    plt.ion()
     plt.show()
 
     # Get label info
