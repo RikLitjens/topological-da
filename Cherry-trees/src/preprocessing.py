@@ -13,20 +13,20 @@ def edge_evaluation(points, clusters, r_super):
     for i in range(len(points)):
         for j in range(i + 1, len(points)):
             if dist(points[i], points[j]) <= 2 * r_super:
-                edges.append(i, j)
-                edges.append(j, i)
+                edges.append([i, j])
+                edges.append([j, i])
     
     # Convert points to new coordinate system
     for k in range(len(edges)):
         n_i = points[edges[k][0]]
         n_j = points[edges[k][1]]
 
-        cluster_i = clusters[edges[k][0]]
-        cluster_j = clusters[edges[k][1]]
-        total_cluster = cluster_k.extend(cluster_j)
+        total_cluster = clusters[edges[k][0]]
+        total_cluster.extend(clusters[edges[k][1]])
+        total_cluster = np.array(total_cluster)
 
         # X-axis is equal to the direction of the edge
-        x_axis_new = normalize(n_j - n_i)
+        x_axis_new = normalize([n_j - n_i])[0]
 
         square_cluster = np.matmul(np.matrix.transpose(total_cluster), total_cluster)
         U, S, Vh = np.linalg.svd(square_cluster)
@@ -35,11 +35,16 @@ def edge_evaluation(points, clusters, r_super):
         min_eigenvalue_index = min_eigenvalues[0]
 
         # The z-axis is equal to the 3rd least significant comoponent (eigenvector belonging to the third lowest eigenvalues)
-        z_axis_new = U[min_eigenvalue_index]
+        z_axis_n = U[min_eigenvalue_index]
+        z_axis_n = normalize([z_axis_new])[0]
 
         # The y-axis is then perpendicular to the x_axis_new - z_axis_new plane
-        y_axis_new = np.cross(z_axis_new, x_axis_new)
-        
+        y_axis_new = np.cross(z_axis_n, x_axis_new)
+        y_axis_new = normalize([y_axis_new])[0]
+
+        z_axis_new = np.cross(x_axis_new, y_axis_new)
+        z_axis_new = normalize([z_axis_new])[0]
+
 
         # Find rotation from x, y, z to x_axis_new, y_axis_new, a_axis_new
         # Because the axes are unit vectors (1, 0, 0), (0, 1, 0) and (0, 0, 1), 
