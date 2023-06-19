@@ -33,9 +33,9 @@ def get_super_points(data, radius):
     while counter > 0:
         print(f" Points left: {counter}")
         sample_index = np.random.choice(indices[mask], 1)
-        current_point = sorted_data[sample_index]
+        current_point = sorted_data[sample_index][0]
 
-        cluster = [current_point[0]]
+        cluster = [current_point]
         cluster_indices = [sample_index[0]]
 
         for c, candidate_point in enumerate(sorted_data[mask][sample_index[0]+1:]):
@@ -48,7 +48,7 @@ def get_super_points(data, radius):
                 if distance <= radius:
                     cluster.append(candidate_point)
                     cluster_indices.append(sample_index[0]+c+1)
-                if abs(current_point[0][0]-candidate_point[0]) > radius:
+                if abs(current_point[0]-candidate_point[0]) > radius:
                     break
 
         for c, candidate_point in enumerate(sorted_data[mask][sample_index[0]-1:-1]):
@@ -57,7 +57,7 @@ def get_super_points(data, radius):
                 if distance <= radius:
                     cluster.append(candidate_point)
                     cluster_indices.append(sample_index[0]-c-1)
-                if abs(current_point[0][0]-candidate_point[0]) > radius:
+                if abs(current_point[0]-candidate_point[0]) > radius:
                     break
         
         counter -= len(cluster)
