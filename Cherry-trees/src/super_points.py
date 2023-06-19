@@ -1,29 +1,13 @@
 import open3d as o3d
 import numpy as np
 import time
+from helpers import dist
 
-def load_pcd(path):
-    """Loads a point cloud from a file and returns it as an open3d point cloud."""
-    pcd_file = path
-    pcd = o3d.io.read_point_cloud(pcd_file)
-    return pcd
-
-def get_data(pcd):
-    """Gets the data from a point cloud and returns it as a numpy array."""
-    data = np.asarray(pcd.points)
-    return data
-
-def numpy_to_pcd(data):
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(data)
-    return pcd
-
-def dist(point_1, point_2):
-    """Calculates the distance between two points in 3D space.
-    
-    returns: 
-        float: the distance between the two points"""
-    return np.linalg.norm(point_1-point_2)
+# def load_pcd(path):
+#     """Loads a point cloud from a file and returns it as an open3d point cloud."""
+#     pcd_file = path
+#     pcd = o3d.io.read_point_cloud(pcd_file)
+#     return pcd
 
 def get_super_points(data, radius):
     """Gets the super points from a point cloud.
@@ -56,6 +40,10 @@ def get_super_points(data, radius):
 
         for c, candidate_point in enumerate(sorted_data[mask][sample_index[0]+1:]):
             if c != sample_index:
+                if len(current_point) != 3:
+                    print(f"FAILURE! Current point: {current_point}")
+                if len(candidate_point) != 3:
+                    print(f"FAILURE! Candidate point: {candidate_point}")
                 distance = dist(current_point, candidate_point)
                 if distance <= radius:
                     cluster.append(candidate_point)
