@@ -23,11 +23,7 @@ o3d.visualization.draw_geometries([super_points_pcd],
                                     front=[-0.4999, -0.1659, -0.8499],
                                     lookat=[2.1813, 2.0619, 2.0999],
                                     up=[0.1204, -0.9852, 0.1215])
-
-
-
 edges = []
-
 # Define the edges
 for i in range(len(points)):
     for j in range(i + 1, len(points)):
