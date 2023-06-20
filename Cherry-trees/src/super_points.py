@@ -90,6 +90,7 @@ def load_super_points(path):
     return get_super_points(data, 0.1)
 
 if __name__ == "__main__":
-    pcd = load_pcd("Cherry-trees/data/cloud_final.pcd")
+    pcd = load_pcd("Cherry-trees/data/cloud_final_0.pcd")
+    
     data = get_data(pcd)
     get_super_points(data, 0.1)
