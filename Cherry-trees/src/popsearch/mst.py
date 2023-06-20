@@ -128,11 +128,11 @@ def test_mst():
            Edge(vertices[4], vertices[5], 0, None)]
 
     graph = Graph(vertices, edg)
-    print(graph.vertices)
-    print(graph.edges)
+    # print(graph.vertices)
+    # print(graph.edges)
     mst_edges = graph.kruskal()
-    for edge in mst_edges.edges:
-        print(f"Edge from {edge.p_start} to {edge.p_end}")
+    # for edge in mst_edges.edges:
+    #     print(f"Edge from {edge.p_start} to {edge.p_end}")
 
     graph.plot()
     mst_edges.plot()

@@ -9,9 +9,8 @@ from popsearch.edge import Edge
 from popsearch.skeleton import LabelEnum
 from popsearch.mst import *
 
-test_mst()
-assert False
-##
+# test_mst()
+
 def prepare_edge_model():
     make_model()
 
@@ -21,7 +20,7 @@ def prepare_edge_model():
 # Get the path to the data
 local_path = get_data_path()
 
-bag_id = 4
+bag_id = 2
 # Load the point cloud
 pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 
@@ -51,7 +50,6 @@ edge_confidences = model(X)
 # convert to edge class
 print(len(super_points))
 print(len(edges))
-print(print(edge_confidences.shape))
 
 rich_edges = []
 for i, primitive_edge in enumerate(edges):
