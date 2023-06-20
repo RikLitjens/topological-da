@@ -35,7 +35,8 @@ class NET(nn.Module):
             nn.Linear(64, 6)
         )
 
-        self.linear1 = nn.Linear(10, 128)       # Combined pos/elev and feature vector: 4 + 6 = 10
+        # self.linear1 = nn.Linear(10, 128)      # Combined pos/elev and feature vector: 4 + 6 = 1
+        self.linear1 = nn.Linear(4, 128)        # only image data
         self.dropout1 = nn.Dropout(p=0.25)      # Dropout layer with 25% dropout
         self.linear2 = nn.Linear(128, 128)
         self.dropout2 = nn.Dropout(p=0.25)
@@ -49,7 +50,12 @@ class NET(nn.Module):
 
         # Process image and concatenate
         img_vector = self.image_to_vector(image)
-        data = torch.concat((position_elevation, img_vector), dim=1)
+
+        # with pos encoding
+        # data = torch.concat((position_elevation, img_vector), dim=1)
+
+        # without pos encoding
+        data = img_vector
 
         # Linear layer 1
         data = self.dropout1(self.linear1(data))
