@@ -323,3 +323,4 @@ cherry_trees_data/
 # Configfiles
 .config/config.ini
 *.png
+Labeling/data/.DS_Store
