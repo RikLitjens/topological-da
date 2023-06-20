@@ -49,12 +49,12 @@ for image_number in range(0, 200):
     image_location = os.path.join(image_location, f'bag{bag_number}histogram_{image_number}.png')
 
     # Open in external window
-    # Image.open(image_location).resize(size=(100,150)).show()
+    Image.open(image_location).resize(size=(100,200)).show()
 
     # Plot image
-    plt.imshow(np.asarray(Image.open(image_location)), cmap='gray')
+    # plt.imshow(np.asarray(Image.open(image_location)))
     # plt.ion()
-    plt.show()
+    # plt.show()
 
     # Get label info
     label = input(f" 1 or 0? ")
