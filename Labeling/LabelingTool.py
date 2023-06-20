@@ -17,7 +17,7 @@ elif username.lower() == "marco":
     bag_number = 1
 elif username.lower() == "olivier":
     bag_number = 2
-elif username.lower() == "alex":
+elif username.lower() == "alec":
     bag_number = 3
 elif  username.lower() == "rik":
     bag_number = 4
