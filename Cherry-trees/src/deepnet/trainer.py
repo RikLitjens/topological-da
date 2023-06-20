@@ -36,6 +36,7 @@ class Trainer():
             train_losses=[]
             for batch in self.training_DataLoader:
                 x,y=batch
+
                 input, target = x.to(self.device), y.to(self.device)  # send to device (GPU or CPU)
                 self.optimizer.zero_grad()  # zerograd the parameters
                 out = self.model(input)  # one forward pass
@@ -90,15 +91,7 @@ class Trainer():
         # Used in F1-score but also useful to return to generate a confusion matrix
         rounded_predictions = torch.round(predictions)
 
-        score = 0
-        match scorer:
-            # case 'auc':
-            #     score = roc_auc_score(targets, predictions, multi_class='ovr')
-            case 'f1':
-                score = f1_score(targets, rounded_predictions, average='micro')
-            # case 'accuracy':
-            #     score = accuracy_score(flat_targets, flat_predictions, normalize=True)
-                
+        score = f1_score(targets, rounded_predictions, average='micro')
         return score, targets, rounded_predictions
 
     def get_predictions(self, loader): 

@@ -1,44 +1,55 @@
 from super_points import *
 from helpers import *
-from preprocessing import *
-from neuralnet import *
+from edge_preprocessing import *
+from deepnet.neuralnet import *
+from deepnet.net_main import *
 import os
+from PIL import Image
 
 
-# # Get the path to the data
-# local_path = get_data_path()
+##
+def prepare_edge_model():
+    make_model()
 
-# print(local_path)
+# prepare model: not necessary each time, as it is saved
+####prepare_edge_model()
 
-# bag_id = 4
-# # Load the point cloud
-# pcd = load_point_cloud(local_path, bag_id, "cloud_final")
+# Get the path to the data
+local_path = get_data_path()
 
-# # Load the superpoints
-# clusters, super_points = get_super_points(get_data(pcd), 0.1)
+bag_id = 4
+# Load the point cloud
+pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 
-# # Make point cloud out of superpoints
-# super_points_pcd = numpy_to_pcd(super_points)
+# Load the superpoints
+clusters, super_points = get_super_points(get_data(pcd), 0.1)
 
-# # Visualize the point cloud
-# o3d.visualization.draw_geometries([super_points_pcd],
-#                                     zoom=0.455,
-#                                     front=[-0.4999, -0.1659, -0.8499],
-#                                     lookat=[2.1813, 2.0619, 2.0999],
-#                                     up=[0.1204, -0.9852, 0.1215])
+# create the edges
+edges = get_edges(super_points, 0.1)
+edge_histograms = edge_evaluation(edges, super_points, clusters, 0.1, bag_id)
 
-# edge_evaluation(super_points, clusters, 0.10, bag_id)
 
-# path = fr"Cherry-trees\images\Training\bag0histogram_0.png"
-ROOT_DIR = os.path.abspath(os.curdir)
-files = os.listdir(os.path.join(ROOT_DIR, "Cherry-trees", "images", "Training"))
-files.sort()
+# Load the saved model
+model = NET()
+model_path = os.path.join(os.getcwd(), 'Cherry-trees/src/deepnet/model.tree')
+model.load_state_dict(torch.load(model_path))
 
-for i in range(len(files)):
-    bag = max(0, math.floor(i / 200))
-    number = i - bag * 200
-    histogram = get_image(fr"Cherry-trees\images\Training\{files[i]}")
-    histograms = explode_data(histogram, 3)
-    for i in range(len(histograms)):
-        img = Image.fromarray(histograms[i].astype(np.uint8), 'L')
-        img.save(fr"Cherry-trees\images\exploded\bag{bag}histogram{number}resample{i}.png")
+X = torch.tensor(edge_histograms).reshape(-1, 1, 32, 16).float()
+
+edge_confidences = model(X)
+
+# save some examples
+for i in range(5):
+    img = Image.fromarray(edge_histograms[i].astype(np.uint8), 'L')
+    img.save(f"example-{edge_confidences[i]}.png".replace(".", "_", 1))
+
+
+# convert to edge class
+print(edges)
+print(super_points)
+
+    
+
+
+
+

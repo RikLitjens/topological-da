@@ -4,13 +4,16 @@ import numpy as np
 from sklearn.preprocessing import normalize
 import matplotlib.pyplot as plt
 from PIL import Image
+from super_points import *
+from helpers import *
+from deepnet.net_main import CherryLoader
+import os
 
 
-def edge_evaluation(points, clusters, r_super, bag):
-    edges = get_edges(points, r_super)
-    
+def edge_evaluation(edges, points, clusters, r_super, bag):    
     total_cluster = []
     # Convert points to new coordinate system
+    histograms = []
     for k in range(len(edges)):
         n_i = points[edges[k][0]]
         n_j = points[edges[k][1]]
@@ -40,15 +43,17 @@ def edge_evaluation(points, clusters, r_super, bag):
         # Initialize the 32x16 histogram for the CNN and normalize it to 0 - 255 (image color range)
         histogram = make_greyscale(total_cluster, max_x, min_x, max_y, min_y)
 
-        # Save the histogram to a file
-        # plt.imshow(histogram, interpolation='nearest', cmap='gray')
-        # plt.savefig(f"images\histogram_{k}.png")
+        # store
+        histograms.append(histogram)
 
-        img = Image.fromarray(histogram.astype(np.uint8), 'L')
-        img.save(fr"Cherry-trees\images\bag{bag}histogram_{k}.png")
-        print(f"Saved image {k}")
+        # save file
+        # img = Image.fromarray(histogram.astype(np.uint8), 'L')
+        # img.save(fr"Cherry-trees\images\bag{bag}histogram_{k}.png")
+        # print(f"Saved image {k}")
 
         total_cluster = []
+
+    return histograms
 
 def get_edges(points, r_super):
     edges = []
@@ -109,3 +114,18 @@ def make_greyscale(total_cluster, max_x, min_x, max_y, min_y):
     histogram = histogram * max_hist
 
     return histogram
+
+def test_image_creation():
+    # path = fr"Cherry-trees\images\Training\bag0histogram_0.png"
+    ROOT_DIR = os.path.abspath(os.curdir)
+    files = os.listdir(os.path.join(ROOT_DIR, "Cherry-trees", "images", "Training"))
+    files.sort()
+
+    for i in range(len(files)):
+        bag = max(0, math.floor(i / 200))
+        number = i - bag * 200
+        histogram = get_image(fr"Cherry-trees\images\Training\{files[i]}")
+        histograms = CherryLoader().explode_data(histogram, 3)
+        for i in range(len(histograms)):
+            img = Image.fromarray(histograms[i].astype(np.uint8), 'L')
+            img.save(fr"Cherry-trees\images\exploded\bag{bag}histogram{number}resample{i}.png")

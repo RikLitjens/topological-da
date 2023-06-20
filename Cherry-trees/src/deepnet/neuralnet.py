@@ -35,12 +35,6 @@ class NET(nn.Module):
             nn.Linear(64, 6)
         )
 
-        # # self.linear1 = nn.Linear(10, 128)     # Combined pos/elev and feature vector: 4 + 6 = 1
-        # self.linear1 = nn.Linear(6, 128)        # only image data
-        # self.dropout1 = nn.Dropout(p=0.25)      # Dropout layer with 25% dropout
-        # self.linear2 = nn.Linear(128, 128)
-        # self.dropout2 = nn.Dropout(p=0.25)
-
         # I'd do this differently though..
         self.final_fc = nn.Linear(6, 1)       # Final fully connected layer leading to <is_valid> (2d) and <category> (5d) one-hot encoded vector
 

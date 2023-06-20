@@ -1,6 +1,6 @@
 # Helper function to visualize the model training process
 import matplotlib.pyplot as plt
-from trainer import Trainer
+from deepnet.trainer import Trainer
 import torch
 import torch.nn.functional as F
 
@@ -38,23 +38,6 @@ def plot_training_score_progress(trainer, model_name):
     plt.show()
 
 
-def plot_training_loss_progress(trainer, model_name):
-    train_losses = trainer.epoch_train_losses
-    val_losses = trainer.epoch_val_losses
-
-    epochs = range(1, len(train_losses) + 1)
-
-    plt.plot(epochs, train_losses, 'b-o', label='Train Losses')
-    plt.plot(epochs, val_losses, 'r-o', label='Validation Losses')
-
-    plt.title(f'{model_name} Train and Validation Losses')
-    plt.xlabel('Epochs')
-    plt.ylabel('Losses')
-    plt.legend()
-
-    plt.show()
-
-
 # Helper function to train the models
 def train_model(model, train_loader, val_loader):
     # device
@@ -73,7 +56,7 @@ def train_model(model, train_loader, val_loader):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
     # trainer
-    task1_trainer = Trainer(model=model,
+    trainer = Trainer(model=model,
                     device=device,
                     criterion=loss,
                     optimizer=optimizer,
@@ -83,5 +66,5 @@ def train_model(model, train_loader, val_loader):
                     scorer='f1')
 
     # start training
-    task1_trainer.run_trainer()
-    return model, task1_trainer   
+    trainer.run_trainer()
+    return model, trainer   

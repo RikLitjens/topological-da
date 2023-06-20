@@ -5,9 +5,9 @@ from PIL import Image
 import csv
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset, TensorDataset
-from neuralnet import NET
+from deepnet.neuralnet import NET
 import torch
-from net_helpers import train_model, plot_training_loss_progress, plot_training_score_progress
+from deepnet.net_helpers import train_model, plot_training_loss_progress, plot_training_score_progress
 
 
 class CherryLoader:
@@ -128,8 +128,6 @@ def make_model():
 
     plot_training_score_progress(trainer, "Edge Confidence Model")
 
-    return model
 
-if __name__ == '__main__':
-    make_model()
-    
+    torch.save(model.state_dict(), os.path.join(os.getcwd(), 'Cherry-trees/src/deepnet/model.tree'))
+
