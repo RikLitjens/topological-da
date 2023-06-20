@@ -52,7 +52,7 @@ for image_number in range(0, 200):
     # Image.open(image_location).resize(size=(100,150)).show()
 
     # Plot image
-    plt.imshow(np.asarray(Image.open(image_location)))
+    plt.imshow(np.asarray(Image.open(image_location)), cmap='gray')
     plt.show()
 
     # Get label info
