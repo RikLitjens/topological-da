@@ -44,7 +44,8 @@ class NET(nn.Module):
         # I'd do this differently though..
         self.final_fc = nn.Linear(128, 7)       # Final fully connected layer leading to <is_valid> (2d) and <category> (5d) one-hot encoded vector
 
-    def forward(self, position_elevation: torch.Tensor, image: torch.Tensor) -> torch.Tensor:
+    # def forward(self, position_elevation: torch.Tensor, image: torch.Tensor) -> torch.Tensor:
+    def forward(self, image: torch.Tensor) -> torch.Tensor:
         # position_elevation shape: torch.Tensor([Batch, Length]) --> [x, 4]
         # image shape: torch.Tensor([Batch, Channel, Height, Width]) --> [x, 1, 32, 16]
 
