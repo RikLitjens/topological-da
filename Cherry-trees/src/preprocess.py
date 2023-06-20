@@ -55,6 +55,7 @@ def visualize(pcd, colors=None):
     """Visualizes a point cloud with colors."""
     if np.all(colors != None):
         pcd.colors = o3d.utility.Vector3dVector(colors[:, :3])
+        
     o3d.visualization.draw_geometries([pcd],
                                     zoom=0.455,
                                     front=[-0.4999, -0.1659, -0.8499],
@@ -69,7 +70,6 @@ if __name__ == "__main__":
     brc.fit(data)
 
     labels = brc.predict(data)
-    print(labels)
 
     max_label = labels.max()
     print(f"point cloud has {max_label + 1} clusters")
@@ -86,4 +86,3 @@ if __name__ == "__main__":
     cleaned_pcd = numpy_to_pcd(cleaned_data)
     
     visualize(cleaned_pcd, None)
-    print(lowest)
