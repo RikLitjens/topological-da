@@ -2,6 +2,7 @@ from super_points import *
 from helpers import *
 from preprocessing import *
 from neuralnet import *
+import os
 
 
 # # Get the path to the data
@@ -28,9 +29,16 @@ from neuralnet import *
 
 # edge_evaluation(super_points, clusters, 0.10, bag_id)
 
-path = fr"Cherry-trees\images\Training\bag0histogram_0.png"
-histogram = get_image(path)
-histograms = explode_data(histogram, 10)
-for i in range(len(histograms)):
-    img = Image.fromarray(histograms[i].astype(np.uint8), 'L')
-    img.save(fr"Cherry-trees\images\exploded\bag{0}histogram{0}resample{i}.png")
+# path = fr"Cherry-trees\images\Training\bag0histogram_0.png"
+ROOT_DIR = os.path.abspath(os.curdir)
+files = os.listdir(os.path.join(ROOT_DIR, "Cherry-trees", "images", "Training"))
+files.sort()
+
+for i in range(len(files)):
+    bag = max(0, math.floor(i / 200))
+    number = i - bag * 200
+    histogram = get_image(fr"Cherry-trees\images\Training\{files[i]}")
+    histograms = explode_data(histogram, 3)
+    for i in range(len(histograms)):
+        img = Image.fromarray(histograms[i].astype(np.uint8), 'L')
+        img.save(fr"Cherry-trees\images\exploded\bag{bag}histogram{number}resample{i}.png")

@@ -65,6 +65,7 @@ class NET(nn.Module):
         return output
 
 def explode_data(histogram, n):
+    print("Started new function!")
     histograms = [histogram]
     
     final_histograms = []
@@ -76,13 +77,13 @@ def explode_data(histogram, n):
         current_hist = histograms[i]
         final_histograms.append(current_hist)
         for j in range(n):
-            print(f"How long does this take? Exploding iteration {j} of {i}")
-            for k in range(len(current_hist)):
-                for l in range(len(current_hist[k])):
-                    if current_hist[k][l] > 0:
-                        current_hist[k][l] = rd.randint(1, 255)
-            print(current_hist)
-            new_hist = current_hist.copy()
-            final_histograms.append(new_hist)
+            editable = current_hist.copy()
+            for k in range(len(editable)):
+                for l in range(len(editable[k])):
+                    if editable[k][l] > 4:
+                        upper_bound = min(255, editable[k][l] * 2)
+                        # editable[k][l] = min(rd.randint(1, upper_bound), rd.randint(1, upper_bound)) # Favor the lower values
+                        editable[k][l] = rd.randint(5, upper_bound)
+            final_histograms.append(editable)
     
     return final_histograms
