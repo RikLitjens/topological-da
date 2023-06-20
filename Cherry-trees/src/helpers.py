@@ -2,6 +2,7 @@ import open3d as o3d
 import math
 import numpy as np
 import configparser
+from PIL import Image
 
 def get_data_path():
     config = configparser.RawConfigParser()
@@ -34,3 +35,9 @@ def numpy_to_pcd(data):
 
 def dist(p1, p2):
     return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2 + (p1[2]-p2[2])**2)
+
+def get_image(path):
+    img = Image.open(path)
+    histogram = np.array(img.getdata())
+    histogram = histogram.reshape((32, 16))
+    return histogram

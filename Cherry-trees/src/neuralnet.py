@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import random as rd
+import numpy as np
 
 
 class NET(nn.Module):
@@ -63,7 +64,7 @@ class NET(nn.Module):
         output = torch.sigmoid(data)
         return output
 
-def explode_data(histogram):
+def explode_data(histogram, n):
     histograms = [histogram]
     
     final_histograms = []
@@ -74,12 +75,14 @@ def explode_data(histogram):
     for i in range(len(histograms)):
         current_hist = histograms[i]
         final_histograms.append(current_hist)
-        for j in range(100):
-            rd.seed(i)
+        for j in range(n):
+            print(f"How long does this take? Exploding iteration {j} of {i}")
             for k in range(len(current_hist)):
                 for l in range(len(current_hist[k])):
                     if current_hist[k][l] > 0:
                         current_hist[k][l] = rd.randint(1, 255)
-            final_histograms.append(current_hist)
+            print(current_hist)
+            new_hist = current_hist.copy()
+            final_histograms.append(new_hist)
     
     return final_histograms
