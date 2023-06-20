@@ -1,3 +1,5 @@
+from edge import Edge
+
 class UnionFind:
     parent_node = {}
     rank = {}
@@ -38,7 +40,7 @@ class Graph:
         final_edges = []
 
         # Sort the edges by weight
-        self.edges = self.edges.sort()
+        self.edges.sort()
 
         uf = UnionFind()
         uf.make_set(self.vertices)
@@ -48,8 +50,22 @@ class Graph:
             j = uf.op_find(tuple(edge.p_end))
             if i != j:
                 final_edges.append(edge)
-                UnionFind.op_union(i, j)
+                uf.op_union(i, j)
 
-        result = Graph(self.point_coordinates, final_edges)
+        result = Graph(self.vertices, final_edges)
         return result
 
+vertices = [[0, 0, 0], [1, 1, 0], [2, 0, 0], [3, -2, 0], [4, 0, 0]]
+edg = [Edge(vertices[0], vertices[1], 0, None),
+       Edge(vertices[0], vertices[2], 0, None),
+       Edge(vertices[1], vertices[2], 0, None),
+       Edge(vertices[2], vertices[3], 0, None),
+       Edge(vertices[3], vertices[4], 0, None),
+       Edge(vertices[2], vertices[4], 0, None)]
+
+graph = Graph(vertices, edg)
+print(graph.vertices)
+print(graph.edges)
+mst_edges = graph.kruskal()
+for edge in mst_edges.edges:
+    print(f"Edge from {edge.p_start} to {edge.p_end}")
