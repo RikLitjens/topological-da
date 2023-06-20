@@ -117,3 +117,9 @@ class Edge:
         score =  self.length() * (1 - self.conf) + self.get_turn_penalty(np.pi / 4, 0.5, 2)
         self.label = label
         return score
+    
+    def __str__(self) -> str:
+        return f'<<Edge {self.p_start}-{self.p_end}, conf={self.conf}, label={self.label}>>'
+
+    def __repr__(self) -> str:
+        return self.__str__()
