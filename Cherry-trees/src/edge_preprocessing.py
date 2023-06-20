@@ -18,12 +18,7 @@ def edge_evaluation(edges, points, clusters, r_super, bag):
         n_i = points[edges[k][0]]
         n_j = points[edges[k][1]]
 
-        # total_cluster = clusters[edges[k][0]]
-        cluster_i = np.array(clusters[edges[k][0]])
-        cluster_j = np.array(clusters[edges[k][1]])
         total_cluster = np.concatenate((clusters[edges[k][0]], clusters[edges[k][1]]), axis=0)
-        # total_cluster.extend(clusters[edges[k][1]])
-        # total_cluster = np.array(total_cluster)
 
         x_axis_new, y_axis_new, z_axis_new = new_coord_system(n_i, n_j, total_cluster)
 
