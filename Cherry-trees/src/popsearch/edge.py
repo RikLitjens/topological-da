@@ -1,8 +1,8 @@
-from src.popsearch.skeleton import LabelEnum
+from popsearch.skeleton import LabelEnum
 import numpy as np
 
 class Edge:
-    def __init__(self, p_start, p_end, conf=0, label=None):
+    def __init__(self, p_start, p_end, conf, label):
         self.p_start = p_start
         self.p_end = p_end
         self.label = label

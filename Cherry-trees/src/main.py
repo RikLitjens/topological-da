@@ -5,7 +5,8 @@ from deepnet.neuralnet import *
 from deepnet.net_main import *
 import os
 from PIL import Image
-
+from popsearch.edge import Edge
+from popsearch.skeleton import LabelEnum
 
 ##
 def prepare_edge_model():
@@ -45,11 +46,18 @@ for i in range(5):
 
 
 # convert to edge class
-print(edges)
-print(super_points)
+print(len(edges))
+print(print(edge_confidences.shape))
+
+rich_edges = []
+for i, primitive_edge in enumerate(edges):
+    p_start = super_points[primitive_edge[0]]
+    p_end = super_points[primitive_edge[1]]
+    conf = edge_confidences[i]
+    for label in LabelEnum:
+        rich_edges.append(Edge(p_start, p_end, conf, label))
 
     
-
-
+print(rich_edges)
 
 

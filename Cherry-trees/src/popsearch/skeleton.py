@@ -9,9 +9,6 @@ class LabelEnum(Enum):
     LEADER = 2
     SIDE = 3
 
-from src.popsearch.edge import Edge
-
-    
 class Skeleton:
     def __init__(self, superpoints, raw_edges, tree_tips) -> None:
         # define suerpoints and raw edges (not added yet but could be)
