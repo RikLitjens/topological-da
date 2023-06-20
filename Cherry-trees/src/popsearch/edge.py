@@ -123,3 +123,9 @@ class Edge:
 
     def __repr__(self) -> str:
         return self.__str__()
+    
+    def get_weight(self):
+        return self.length() * (1 - self.conf)
+
+    def __lt__(self, other):
+         return self.get_weight() < other.get_weight()
