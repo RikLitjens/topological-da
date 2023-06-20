@@ -1,6 +1,8 @@
-from edge import Edge
+from popsearch.edge import Edge
 import numpy as np
 import math
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class UnionFind:
     parent_node = {}
@@ -69,7 +71,30 @@ class Graph:
         result = Graph(self.vertices, final_edges)
         return result
     
-def generate_tree(points, edges, alpha_tip):
+    def plot(self):
+        # Create a 3D plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot the vertices
+        for vertex in self.vertices:
+            x, y, z = vertex
+            ax.scatter(x, y, z, c='r', marker='o')
+
+        # Plot the MST edges
+        for edge in self.edges:
+            x_coords = [edge.p_start[0], edge.p_end[0]]
+            y_coords = [edge.p_start[1], edge.p_end[1]]
+            z_coords = [edge.p_start[2], edge.p_end[2]]
+            ax.plot(x_coords, y_coords, z_coords, c='b')
+
+        # Set labels and display the plot
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        plt.show()
+    
+def cut_tree(points, edges, alpha_tip):
     graph = Graph(points, edges)
     mst = graph.kruskal()
 
@@ -79,11 +104,13 @@ def generate_tree(points, edges, alpha_tip):
 
     for edge in mst.edges:
         if edge.calculate_grow_angle() < np.pi / 4:
-            final_mst.append(edge)
             continue
         threshold = max_height - alpha_tip * (max_height - min_height)
+        print(threshold, max_height, min_height)
         if (edge.p_start[2] < threshold) or (edge.p_end[2] < threshold):
-            final_mst.append(edge)
+            continue
+        
+        final_mst.append(edge)
     
     return Graph(points, final_mst)
 
@@ -91,17 +118,25 @@ def generate_tree(points, edges, alpha_tip):
 
 # This is an example for testing the MST!
 
-# vertices = [[0, 0, 0], [1, 1, 0], [2, 0, 0], [3, -2, 0], [4, 0, 0]]
-# edg = [Edge(vertices[0], vertices[1], 0, None),
-#        Edge(vertices[0], vertices[2], 0, None),
-#        Edge(vertices[1], vertices[2], 0, None),
-#        Edge(vertices[2], vertices[3], 0, None),
-#        Edge(vertices[3], vertices[4], 0, None),
-#        Edge(vertices[2], vertices[4], 0, None)]
+def test_mst():
+    vertices = [[0, 0, 0], [0, 2, 3], [0, 1, 5], [0, -1, 7], [0, 10, 6], [0, 10, 8]]
+    edg = [Edge(vertices[0], vertices[1], 0, None),
+           Edge(vertices[0], vertices[2], 0, None),
+           Edge(vertices[1], vertices[2], 0, None),
+           Edge(vertices[2], vertices[3], 0, None),
+           Edge(vertices[1], vertices[4], 0, None),
+           Edge(vertices[4], vertices[5], 0, None)]
 
-# graph = Graph(vertices, edg)
-# print(graph.vertices)
-# print(graph.edges)
-# mst_edges = graph.kruskal()
-# for edge in mst_edges.edges:
-#     print(f"Edge from {edge.p_start} to {edge.p_end}")
+    graph = Graph(vertices, edg)
+    print(graph.vertices)
+    print(graph.edges)
+    mst_edges = graph.kruskal()
+    for edge in mst_edges.edges:
+        print(f"Edge from {edge.p_start} to {edge.p_end}")
+
+    graph.plot()
+    mst_edges.plot()
+    cut = cut_tree(vertices, edg, 0.4)
+    cut.plot()
+
+        

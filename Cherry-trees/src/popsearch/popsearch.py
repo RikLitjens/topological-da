@@ -17,8 +17,9 @@ class PopSearch:
         self.initialize_population()
 
         # todo
-        for _ in range(20``)
-
+        for _ in range(20):
+            self.create_next_gen()
+            print('Gennie')
 
 
     def initialize_population(self):

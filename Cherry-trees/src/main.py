@@ -7,7 +7,10 @@ import os
 from PIL import Image
 from popsearch.edge import Edge
 from popsearch.skeleton import LabelEnum
+from popsearch.mst import *
 
+test_mst()
+assert False
 ##
 def prepare_edge_model():
     make_model()
@@ -40,12 +43,13 @@ X = torch.tensor(edge_histograms).reshape(-1, 1, 32, 16).float()
 edge_confidences = model(X)
 
 # save some examples
-for i in range(5):
-    img = Image.fromarray(edge_histograms[i].astype(np.uint8), 'L')
-    img.save(f"example-{edge_confidences[i]}.png".replace(".", "_", 1))
+# for i in range(5):
+#     img = Image.fromarray(edge_histograms[i].astype(np.uint8), 'L')
+#     img.save(f"example-{edge_confidences[i]}.png".replace(".", "_", 1))
 
 
 # convert to edge class
+print(len(super_points))
 print(len(edges))
 print(print(edge_confidences.shape))
 
@@ -58,6 +62,13 @@ for i, primitive_edge in enumerate(edges):
         rich_edges.append(Edge(p_start, p_end, conf, label))
 
     
-print(rich_edges)
+
+# get tips
+g = Graph(super_points, rich_edges)
+g.plot()
+mst = g.kruskal()
+mst.plot()
+mst_cut = cut_tree(super_points, rich_edges, 0.6)
+mst_cut.plot()
 
 

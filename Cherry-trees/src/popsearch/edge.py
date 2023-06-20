@@ -1,4 +1,4 @@
-from skeleton import LabelEnum
+from popsearch.skeleton import LabelEnum
 import numpy as np
 
 class Edge:
@@ -42,7 +42,12 @@ class Edge:
         abs_dot_product_x = np.abs(dot_product_x)
         
         # Calculate the angle in radians
-        angle_radians = np.arctan(abs_dot_product_z / abs_dot_product_x)
+        print(dot_product_z, dot_product_x)
+        print(edge_vector)
+        if abs_dot_product_x != 0:
+            angle_radians = np.arctan(abs_dot_product_z / abs_dot_product_x)
+        else:
+            angle_radians = np.pi / 2
         
         return angle_radians
     
