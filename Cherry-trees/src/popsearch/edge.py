@@ -1,4 +1,4 @@
-from popsearch.skeleton import LabelEnum
+from skeleton import LabelEnum
 import numpy as np
 
 class Edge:
