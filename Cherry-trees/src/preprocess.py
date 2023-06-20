@@ -63,6 +63,23 @@ def visualize(pcd, colors=None):
                                     up=[0.1204, -0.9852, 0.1215])
 
 
+def clean_up(pcd):
+    data = get_data(pcd)
+    brc = Birch(threshold=0.1, n_clusters=5)
+    brc.fit(data)
+
+    labels = brc.predict(data)
+
+    max_label = labels.max()
+
+    lowest = get_lowest_cluster(data, max_label, labels)
+
+    cleaned_data = data[np.where(labels!=lowest)]
+
+    cleaned_pcd = numpy_to_pcd(cleaned_data)
+    return cleaned_pcd
+
+
 if __name__ == "__main__":
     pcd = load_pcd("Cherry-trees/data/cloud_final_0.pcd")
     data = get_data(pcd)
@@ -77,7 +94,7 @@ if __name__ == "__main__":
     colors = plt.get_cmap("tab20")(labels / (max_label if max_label > 0 else 1))
     colors[labels < 0] = 0
 
-    visualize(pcd, colors)
+    visualize(pcd, None)
 
     lowest = get_lowest_cluster(data, max_label, labels)
 
