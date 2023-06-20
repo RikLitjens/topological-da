@@ -1,4 +1,6 @@
 from edge import Edge
+import numpy as np
+import math
 
 class UnionFind:
     parent_node = {}
@@ -35,6 +37,18 @@ class Graph:
             self.vertices.append(tuple(point))
         self.edges = edges
     
+    def heighest(self):
+        heighest = 0
+        for vertex in self.vertices:
+            heighest = max(heighest, vertex[2])
+        return heighest
+    
+    def lowest(self):
+        lowest = math.inf
+        for vertex in self.vertices:
+            lowest = min(lowest, vertex[2])
+        return lowest
+    
     def kruskal(self):
         # The edges of the final MST
         final_edges = []
@@ -54,18 +68,40 @@ class Graph:
 
         result = Graph(self.vertices, final_edges)
         return result
+    
+def generate_tree(points, edges, alpha_tip):
+    graph = Graph(points, edges)
+    mst = graph.kruskal()
 
-vertices = [[0, 0, 0], [1, 1, 0], [2, 0, 0], [3, -2, 0], [4, 0, 0]]
-edg = [Edge(vertices[0], vertices[1], 0, None),
-       Edge(vertices[0], vertices[2], 0, None),
-       Edge(vertices[1], vertices[2], 0, None),
-       Edge(vertices[2], vertices[3], 0, None),
-       Edge(vertices[3], vertices[4], 0, None),
-       Edge(vertices[2], vertices[4], 0, None)]
+    max_height = graph.heighest()
+    min_height = graph.lowest()
+    final_mst = []
 
-graph = Graph(vertices, edg)
-print(graph.vertices)
-print(graph.edges)
-mst_edges = graph.kruskal()
-for edge in mst_edges.edges:
-    print(f"Edge from {edge.p_start} to {edge.p_end}")
+    for edge in mst.edges:
+        if edge.calculate_grow_angle() < np.pi / 4:
+            final_mst.append(edge)
+            continue
+        threshold = max_height - alpha_tip * (max_height - min_height)
+        if (edge.p_start[2] < threshold) or (edge.p_end[2] < threshold):
+            final_mst.append(edge)
+    
+    return Graph(points, final_mst)
+
+
+
+# This is an example for testing the MST!
+
+# vertices = [[0, 0, 0], [1, 1, 0], [2, 0, 0], [3, -2, 0], [4, 0, 0]]
+# edg = [Edge(vertices[0], vertices[1], 0, None),
+#        Edge(vertices[0], vertices[2], 0, None),
+#        Edge(vertices[1], vertices[2], 0, None),
+#        Edge(vertices[2], vertices[3], 0, None),
+#        Edge(vertices[3], vertices[4], 0, None),
+#        Edge(vertices[2], vertices[4], 0, None)]
+
+# graph = Graph(vertices, edg)
+# print(graph.vertices)
+# print(graph.edges)
+# mst_edges = graph.kruskal()
+# for edge in mst_edges.edges:
+#     print(f"Edge from {edge.p_start} to {edge.p_end}")
