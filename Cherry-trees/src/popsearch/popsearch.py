@@ -1,5 +1,6 @@
 class PopSearch:
     def __init__(self) -> None:
-        pass
+        self.K = 500
+        self.k_rep = 3
 
     
