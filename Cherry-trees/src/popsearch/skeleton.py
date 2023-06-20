@@ -1,7 +1,6 @@
 from enum import Enum
 from queue import PriorityQueue
 import numpy as np
-import heapq
 
 class LabelEnum(Enum):
     TRUNK = 0
@@ -68,10 +67,7 @@ class Skeleton:
         """
         return sum([self.get_reward(edge, None) for edge in self.proper_edges])
     
-    def get_skel_potential_after(self, eligible_edge):
-        # add edge and remove after
-        self.add_eligible_edge(eligible_edge)
-
+    def get_potential(self, eligible_edge):
         # get first two potential components
         new_skel_score = self.get_skel_score()
         dijk_edge_score = sum([ed.get_edge_score() for ed in eligible_edge.dijk[1]])
@@ -92,11 +88,9 @@ class Skeleton:
         # calculate final potantial component
         dijk_turn_penalty_score = sum(dropped_penalties)
 
-        # remove the added edge again, ONLY POTENTIAL
-        self.remove_last_proper_edge()
 
         return new_skel_score + dijk_edge_score - dijk_turn_penalty_score
-
+    
 
     def get_eligible(self, n_tip):
         # initialize dijkstra
@@ -246,6 +240,12 @@ class Skeleton:
         # otherwise
         return False
 
+
+    def __eq__(self, other: object) -> bool:
+        return self.edges == other.edges
+    
+    def __hash__(self):
+        return hash(tuple(self.edges))
                 
 
 

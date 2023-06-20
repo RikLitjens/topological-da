@@ -129,3 +129,9 @@ class Edge:
 
     def __lt__(self, other):
          return self.get_weight() < other.get_weight()
+    
+    def __eq__(self, other: object) -> bool:
+        return self.p_start == other.p_start and self.p_end == other.p_end and self.label == other.label
+    
+    def __hash__(self) -> int:
+        return hash((self.p_start, self.p_end, self.label))
