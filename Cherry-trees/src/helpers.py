@@ -11,7 +11,7 @@ def get_data_path():
 
 
 def load_point_cloud(local_path, bag_id, pointcloud_name):
-    pcd = o3d.io.read_point_cloud(fr"{local_path}\bag_{bag_id}\{pointcloud_name}.pcd")
+    pcd = o3d.io.read_point_cloud(fr"{local_path}/bag_{bag_id}/{pointcloud_name}.pcd")
     return pcd
 
 
