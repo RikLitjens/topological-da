@@ -14,17 +14,16 @@ from rtree import index as rtindex
 #     neigh = knn.KNeighborsClassifier(n_neighbors)
 #     neigh.fit(X, y)
 
-# class KD:
-#     def __init__(self, strip):
-#         self.tree = knn.BallTree(strip)
+class KD:
+    def __init__(self, strip):
+        self.tree = knn.BallTree(strip)
+        self.points = strip
     
-#     def get_neighbors(self, point, radius):
-#         if self.tree.query_radius(point, r=radius, count_only=True) != 0:
-#             return self.tree.query_radius(point, r=0.3)
-#         return []
-    
-#     def remove_visited(self, points):
-#         self.tree.remove(points)
+    def get_neighbors(self, point, radius):
+        if self.tree.query_radius(point, r=radius, count_only=True) != 0:
+            dist, ind = self.tree.query_radius(point, radius, return_distance=True)
+            return dist, self.points[ind]
+        return None, []
 
 class RT:
     def __init__(self, strip):
