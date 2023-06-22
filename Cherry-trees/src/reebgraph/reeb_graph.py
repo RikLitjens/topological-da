@@ -11,3 +11,6 @@ class PointVal:
     
     def __lt__(self, other):
          return self.get_value() < other.get_value()
+    
+    def __eq__(self, other: object) -> bool:
+        return self.point == other.point and self.value == other.value

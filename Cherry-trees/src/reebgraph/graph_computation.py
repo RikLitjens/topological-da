@@ -1,4 +1,4 @@
-
+from knn import KD
 
 def compute_reeb(pcd, strip_size):
     f = choose_f()
@@ -24,9 +24,31 @@ def compute_reeb(pcd, strip_size):
                     min_val = min_val + strip_size
         strip_temp.append(point_vals[i].copy())
     
-def connected_components(strip):
+def connected_components(strip, tau):
     # Find the connected components in a strip
     # Returns a list of lists of points
+    data = KD(strip)
+
+    points = {}
+    for point in strip:
+        points.add((point[0], point[1], point[2]))
+
+    components = []
+    while len(points) > 0:
+        new_point = points.pop()
+
+        to_visit = {new_point}
+        while len(to_visit) > 0:
+            to_visit.remove(new_point)
+            neighbors = data.get_neighbors(new_point, tau)
+
+            neighbors = set(neighbors)
+            points.remove(neighbors)
+
+            to_visit.add(neighbors)
+            new_point = neighbors.pop()
+        components.append()
+
 
 
 def choose_f():
