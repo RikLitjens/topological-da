@@ -1,14 +1,28 @@
-from knn import KD
-from reeb_graph import ReebNode
+from helpers import numpy_to_pcd, visualize_point_cloud
+from reebgraph.knn import KD, RT
+from reebgraph.reeb_graph import PointVal, ReebNode
 
 def compute_reeb(pcd, strip_size, tau):
     f = choose_f()
 
     point_vals = []
     for point in pcd:
-        point_vals.append(point, f(point[0], point[1], point[2]))
+        point_vals.append(PointVal(point, f(point[0], point[1], point[2])))
     point_vals.sort()
+    
+    strips, ranges = get_strips(point_vals, strip_size)
 
+    for strip in strips:
+        vis_list = []
+        for point_val in strip:
+            vis_list.append(point_val.get_point())
+        visualize_point_cloud(numpy_to_pcd(vis_list))
+
+    reeb_nodes = find_reeb_nodes(strips, ranges, tau)
+    
+    return reeb_nodes
+    
+def get_strips(point_vals, strip_size):
     # Define the strips, i.e. the sets of points in each subdivision of the range of f. 
     # For example, range [0,1), [1,2), [2,3), etc.
     strips = []
@@ -25,42 +39,24 @@ def compute_reeb(pcd, strip_size, tau):
                 while min_val + strip_size < point_vals[i].get_value():
                     min_val = min_val + strip_size
         else:
-            strip_temp.append(point_vals[i].copy())
+            strip_temp.append(PointVal(point_vals[i].get_point(), point_vals[i].value))
     
+    return strips, ranges
 
-    reeb_nodes = []
-    for i in range(len(strips)):
-        components, centroids = connected_components(strips[i], tau)
-        temp_nodes = []
-        for i in range(len(components)):
-            temp_nodes.append(ReebNode(centroids[i], components[i], ranges[i]))
-        reeb_nodes.append(temp_nodes)
-    
-    for strip in reeb_nodes:
-        for i in range(len(strip)):
-            for j in range(len(strip)):
-                if i != j:
-                    node1 = strip[i]
-                    node2 = strip[j]
-                    if tau_connected(node1.get_pointcloud(), node2.get_pointcloud(), tau):
-                        strip[i].add_edge(strip[j])
-                        strip[j].add_edge(strip[i])
-    
-    return reeb_nodes
-    
 def connected_components(strip, tau):
     # Find the connected components in a strip
     # Returns a list of lists of points
-    data = KD(strip)
+    data = RT(strip)
 
-    points = {}
+    points = set()
     for point in strip:
-        points.add((point[0], point[1], point[2]))
+        coord = point.get_point()
+        points.add((coord[0], coord[1], coord[2]))
 
     components = []
     while len(points) > 0:
         new_point = points.pop()
-        component = {}
+        component = set()
 
         to_visit = {new_point}
         while len(to_visit) > 0:
@@ -105,6 +101,30 @@ def tau_connected(pcd1, pcd2, tau):
             return True
     return False
 
+def find_reeb_nodes(strips, ranges, tau):
+    # Find each component's centroid and create a ReebNode for it. 
+    # Using ranges, make sure to store the range of f that the node is part of. 
+    reeb_nodes = []
+    for i in range(len(strips)):
+        components, centroids = connected_components(strips[i], tau)
+        temp_nodes = []
+        for i in range(len(components)):
+            temp_nodes.append(ReebNode(centroids[i], components[i], ranges[i]))
+        reeb_nodes.append(temp_nodes)
+    
+    get_edges(reeb_nodes, tau)
+    return reeb_nodes
+
+def get_edges(reeb_nodes, tau):
+    for strip in reeb_nodes:
+        for i in range(len(strip)):
+            for j in range(len(strip)):
+                if i != j:
+                    node1 = strip[i]
+                    node2 = strip[j]
+                    if tau_connected(node1.get_pointcloud(), node2.get_pointcloud(), tau):
+                        strip[i].add_edge(strip[j])
+                        strip[j].add_edge(strip[i])
 
 def choose_f():
     def f(x, y, z):

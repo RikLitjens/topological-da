@@ -2,6 +2,10 @@ import sklearn.neighbors as knn
 from rtreelib import RTree, Rect
 from rtree import index as rtindex
 
+import sys
+sys.path.insert(0, fr'C:\Users\marco\Documents\GitHub\topological-da-geolife\Cherry-trees\src')
+
+from helpers import dist
 
 # def knn_graph(n_neighbors, pcd):
 #     """
@@ -31,19 +35,38 @@ class RT:
 
         p = rtindex.Property()
         p.dimension = 3
+        p.dat_extension = 'data'
+        p.idx_extension = 'index'
 
-        self.rt = rtindex.Index(properties=p)
+        self.rt = rtindex.Index('3d_index', properties=p)
         for i in range(len(strip)):
-            self.rt.insert(i, self.to_index(strip[i]))
+            self.rt.insert(i, self.to_index(strip[i].get_point()))
         
     def get_neighbors(self, point, radius):
         items = self.rt.intersection(self.to_index(point, radius))
         neighbors = []
         for item in items:
-            point = self.strip[item]
-            neighbors.append(point)
-            self.rt.delete(item, self.to_index(point))
+            new_point = self.strip[item].get_point()
+            if dist(point, new_point) <= radius:
+                neighbors.append(new_point)
+                self.rt.delete(item, self.to_index(new_point))
         return neighbors
     
     def to_index(self, point, radius=0):
-        return (point[0] - radius, point[1] - radius, point[2] - radius, point[0] - radius, point[1] - radius, point[2] - radius)
+        return (point[0] - radius, point[1] - radius, point[2] - radius, point[0] + radius, point[1] + radius, point[2] + radius)
+    
+# strip = [
+#     [0,1,1],
+#     [0,1.5,1],
+#     [0,2.4,2.4],
+#     [0,1.7,1.7],
+#     [0,2,1],
+#     [0,2.5,3],
+#     [0.5, 1.3, 1.3],
+#     [0,2.3, 2.8]
+# ]
+
+# data = RT(strip)
+# print(data.get_neighbors(strip[0], 1))
+# print(data.get_neighbors(strip[0], 1))
+# print(data.get_neighbors(strip[2], 1))

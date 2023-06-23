@@ -1,3 +1,4 @@
+from reebgraph.graph_computation import compute_reeb
 from super_points import *
 from helpers import *
 from edge_preprocessing import *
@@ -23,10 +24,9 @@ local_path = get_data_path()
 bag_id = 2
 # Load the point cloud
 pcd = load_point_cloud(local_path, bag_id, "cloud_final")
-clusters, super_points = get_super_points(get_data(pcd), 0.05)
-print(len(super_points))
-visualize_point_cloud(super_points)
-
+# clusters, super_points = get_super_points(get_data(pcd), 0.05)
+# print(len(super_points))
+# visualize_point_cloud(super_points)
 
 # # Load the superpoints
 # clusters, super_points = get_super_points(get_data(pcd), 0.1)
@@ -74,3 +74,5 @@ visualize_point_cloud(super_points)
 # mst_cut.plot()
 
 
+
+compute_reeb(get_data(pcd), 0.3, 0.1)

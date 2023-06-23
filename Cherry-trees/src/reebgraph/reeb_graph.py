@@ -1,19 +1,22 @@
 class PointVal:
     def __init__(self, point, value):
-        self.point = point
+        self.coord = point
         self.value = value
     
     def get_value(self):
         return self.value
     
     def get_point(self):
-        return self.point
+        return self.coord
     
     def __lt__(self, other):
          return self.get_value() < other.get_value()
     
     def __eq__(self, other: object) -> bool:
-        return self.point == other.point and self.value == other.value
+        return self.coord == other.coord and self.value == other.value
+    
+    def copy(self):
+        return PointVal(self.coord, self.value)
     
 class ReebNode:
     def __init__(self, point, point_cloud, interval):
