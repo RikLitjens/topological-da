@@ -75,4 +75,4 @@ pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 
 
 
-compute_reeb(get_data(pcd), 0.3, 0.1)
+compute_reeb(get_data(pcd), 0.3, 0.05)

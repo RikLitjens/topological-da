@@ -23,7 +23,7 @@ class ReebNode:
         self.point = point
         self.point_cloud = point_cloud
         self.interval = interval
-        self.adj = {}
+        self.adj = set()
     
     def get_pointcloud(self):
         return self.point_cloud

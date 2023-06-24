@@ -23,10 +23,15 @@ class KD:
         self.tree = knn.BallTree(strip)
         self.points = strip
     
-    def get_neighbors(self, point, radius):
+    def get_neighbors(self, tuple_point, radius):
+        point = [[tuple_point[0], tuple_point[1], tuple_point[2]]]
         if self.tree.query_radius(point, r=radius, count_only=True) != 0:
-            dist, ind = self.tree.query_radius(point, radius, return_distance=True)
-            return dist, self.points[ind]
+            ind, dist = self.tree.query_radius(point, radius, return_distance=True)
+            ind = ind[0]
+            result_points = []
+            for i in ind:
+                result_points.append(self.points[i])
+            return dist, result_points
         return None, []
 
 class RT:
@@ -50,7 +55,8 @@ class RT:
             if dist(point, new_point) <= radius:
                 neighbors.append(new_point)
                 self.rt.delete(item, self.to_index(new_point))
-        return neighbors
+        result = tuple([tuple(row) for row in neighbors])
+        return result
     
     def to_index(self, point, radius=0):
         return (point[0] - radius, point[1] - radius, point[2] - radius, point[0] + radius, point[1] + radius, point[2] + radius)
