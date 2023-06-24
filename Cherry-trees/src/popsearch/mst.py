@@ -82,12 +82,12 @@ class Graph:
             c = 'r' if  vertex not in tips else 'g'
             ax.scatter(x, y, z, c=c, marker='o')
 
-        # Plot the MST edges
-        for edge in self.edges:
-            x_coords = [edge.p_start[0], edge.p_end[0]]
-            y_coords = [edge.p_start[1], edge.p_end[1]]
-            z_coords = [edge.p_start[2], edge.p_end[2]]
-            ax.plot(x_coords, y_coords, z_coords, c='b')
+        # # Plot the MST edges
+        # for edge in self.edges:
+        #     x_coords = [edge.p_start[0], edge.p_end[0]]
+        #     y_coords = [edge.p_start[1], edge.p_end[1]]
+        #     z_coords = [edge.p_start[2], edge.p_end[2]]
+        #     ax.plot(x_coords, y_coords, z_coords, c='b')
 
         # Set labels and display the plot
         ax.set_xlabel('X')

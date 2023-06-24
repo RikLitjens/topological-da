@@ -24,8 +24,24 @@ bag_id = 0
 # Load the point cloud
 pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 
+# o3d.visualization.draw_geometries([pcd],
+#                                     zoom=0.455,
+#                                     front=[-0.4999, -0.1659, -0.8499],
+#                                     lookat=[2.1813, 2.0619, 2.0999],
+#                                     up=[0.1204, -0.9852, 0.1215])
+
 # Load the superpoints
 clusters, super_points = get_super_points(get_data(pcd), 0.1)
+
+# # Make point cloud out of superpoints
+# super_points_pcd = numpy_to_pcd(super_points)
+
+# # # Visualize the point cloud
+# o3d.visualization.draw_geometries([super_points_pcd],
+#                                     zoom=0.455,
+#                                     front=[-0.4999, -0.1659, -0.8499],
+#                                     lookat=[2.1813, 2.0619, 2.0999],
+#                                     up=[0.1204, -0.9852, 0.1215])
 
 # create the edges
 edges = get_edges(super_points, 0.1)
@@ -59,7 +75,6 @@ for i, primitive_edge in enumerate(edges):
     for label in LabelEnum:
         rich_edges.append(Edge(p_start, p_end, conf, label))
 
-    
 
 # get tips
 g = Graph(super_points, rich_edges)
@@ -67,8 +82,10 @@ print(f'There are {len(g.find_connected_components(True))} components')
 
 g.plot()
 mst = g.kruskal()
-mst.plot()
-mst_cut = cut_tree(super_points, rich_edges, 0.6)
-mst_cut.plot()
+# mst.plot()
+mst_cut_tree, _ = cut_tree(super_points, rich_edges, 0.6)
+tree_tips = mst_cut_tree.find_tree_tips()
+print('Tree tips')
+mst_cut_tree.plot(tips=tree_tips)
 
 
