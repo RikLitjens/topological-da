@@ -10,6 +10,15 @@ def load_pcd(path):
     pcd = o3d.io.read_point_cloud(pcd_file)
     return pcd
 
+def rotate_z_up(pcd):
+    # Create the rotation matrix for rotating by 90 degrees around x-axis
+    rotation_matrix = np.array([[1, 0, 0],
+                                [0, 0, 1],
+                                [0, -1, 0]])
+
+    # Rotate the point cloud
+    return pcd.rotate(rotation_matrix)
+
 def get_data(pcd):
     """Gets the data from a point cloud and returns it as a numpy array."""
     data = np.asarray(pcd.points)
@@ -39,6 +48,7 @@ def get_lowest_cluster(data, max_label, labels):
     for label in range(max_label):
         masked_labels = data[labels==label]
         centroid = np.mean(masked_labels, axis=0)[2]
+        print( np.mean(masked_labels, axis=0))
 
         if centroid < min_y:
             min_y = centroid

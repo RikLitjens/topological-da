@@ -8,6 +8,7 @@ from PIL import Image
 from popsearch.edge import Edge
 from popsearch.skeleton import LabelEnum
 from popsearch.mst import *
+from preprocess import clean_up, rotate_z_up
 
 # test_mst()
 
@@ -23,12 +24,21 @@ local_path = get_data_path()
 bag_id = 0
 # Load the point cloud
 pcd = load_point_cloud(local_path, bag_id, "cloud_final")
+pcd = rotate_z_up(pcd)
+pcd = clean_up(pcd)
 
-# o3d.visualization.draw_geometries([pcd],
-#                                     zoom=0.455,
-#                                     front=[-0.4999, -0.1659, -0.8499],
-#                                     lookat=[2.1813, 2.0619, 2.0999],
-#                                     up=[0.1204, -0.9852, 0.1215])
+# Create the coordinate frame mesh
+coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=[0, 0, 0])
+
+# Combine the point cloud and coordinate frame into a single geometry list
+geometries = [pcd, coord_frame]
+
+# # Visualize the geometries with axis lines
+# o3d.visualization.draw_geometries(geometries,
+#                                   zoom=0.455,
+#                                   front=[-0.4999, -0.1659, -0.8499],
+#                                   lookat=[2.1813, 2.0619, 2.0999],
+#                                   up=[0.1204, -0.9852, 0.1215])
 
 # Load the superpoints
 clusters, super_points = get_super_points(get_data(pcd), 0.1)
@@ -37,7 +47,8 @@ clusters, super_points = get_super_points(get_data(pcd), 0.1)
 # super_points_pcd = numpy_to_pcd(super_points)
 
 # # # Visualize the point cloud
-# o3d.visualization.draw_geometries([super_points_pcd],
+# geometries = [super_points_pcd, coord_frame]
+# o3d.visualization.draw_geometries(geometries,
 #                                     zoom=0.455,
 #                                     front=[-0.4999, -0.1659, -0.8499],
 #                                     lookat=[2.1813, 2.0619, 2.0999],

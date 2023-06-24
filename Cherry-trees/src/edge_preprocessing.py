@@ -35,6 +35,8 @@ def edge_evaluation(edges, points, clusters, r_super, bag):
         max_y = max(total_cluster[:, 1])
         min_y = min(total_cluster[:, 1])
 
+        print(max_x, min_x, max_y, min_y)
+
         # Initialize the 32x16 histogram for the CNN and normalize it to 0 - 255 (image color range)
         histogram = make_greyscale(total_cluster, max_x, min_x, max_y, min_y)
 
