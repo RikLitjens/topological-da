@@ -71,7 +71,7 @@ class Graph:
         result = Graph(self.vertices, final_edges)
         return result
     
-    def plot(self):
+    def plot(self, tips = [], threshold = None):
         # Create a 3D plot
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
@@ -79,7 +79,8 @@ class Graph:
         # Plot the vertices
         for vertex in self.vertices:
             x, y, z = vertex
-            ax.scatter(x, y, z, c='r', marker='o')
+            c = 'r' if  vertex not in tips else 'g'
+            ax.scatter(x, y, z, c=c, marker='o')
 
         # Plot the MST edges
         for edge in self.edges:
@@ -94,6 +95,49 @@ class Graph:
         ax.set_zlabel('Z')
         plt.show()
     
+    def find_connected_components(self, with_edges=True):
+        representation = {tuple(vertex): [] for vertex in self.vertices}
+        visited = set()
+        components = []
+
+        for edge in self.edges:
+            representation[tuple(edge.p_start)].append(tuple(edge.p_end))
+            representation[tuple(edge.p_end)].append(tuple(edge.p_start))
+
+        def dfs(node, component):
+            visited.add(tuple(node))
+            component.append(tuple(node))
+
+            for neighbor in representation[tuple(node)]:
+                if neighbor not in visited:
+                    dfs(neighbor, component)
+
+        for vertex in self.vertices:
+            if vertex not in visited:
+                component = []
+                dfs(vertex, component)
+                components.append(component)
+
+        if with_edges:
+            edge_components = []
+            for component in components:
+                if len(component) == 1:
+                    continue
+                edge_components.append(component)
+            return edge_components
+        
+        return components
+    
+    def find_tree_tips(self):
+        components = self.find_connected_components(True)
+        tips = []
+        for component in components:
+            tip = sorted(component, key=lambda x: x[2], reverse=True)[0]
+            tips.append(tip)
+        return tips
+
+
+
 def cut_tree(points, edges, alpha_tip):
     graph = Graph(points, edges)
     mst = graph.kruskal()
@@ -106,13 +150,12 @@ def cut_tree(points, edges, alpha_tip):
         if edge.calculate_grow_angle() < np.pi / 4:
             continue
         threshold = max_height - alpha_tip * (max_height - min_height)
-        print(threshold, max_height, min_height)
         if (edge.p_start[2] < threshold) or (edge.p_end[2] < threshold):
             continue
         
         final_mst.append(edge)
     
-    return Graph(points, final_mst)
+    return Graph(points, final_mst), threshold
 
 
 
@@ -128,15 +171,29 @@ def test_mst():
            Edge(vertices[4], vertices[5], 0, None)]
 
     graph = Graph(vertices, edg)
+  
+    mst_edges = graph.kruskal()
+    cut, threshold = cut_tree(vertices, edg, 0.4)
+
     # print(graph.vertices)
     # print(graph.edges)
-    mst_edges = graph.kruskal()
     # for edge in mst_edges.edges:
     #     print(f"Edge from {edge.p_start} to {edge.p_end}")
 
+
+    print(len(graph.find_connected_components()))
+    print(len(cut.find_connected_components()))
+
+    cut_tips = cut.find_tree_tips()
+    print('cut')
+    print(cut_tips)
+    print(cut.find_connected_components())
+
+    # plot 
     graph.plot()
     mst_edges.plot()
-    cut = cut_tree(vertices, edg, 0.4)
+    
     cut.plot()
+    cut.plot(cut_tips, threshold)
 
         

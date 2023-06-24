@@ -55,7 +55,7 @@ def get_edges(points, r_super):
     # Define the edges
     for i in range(len(points)):
         for j in range(i + 1, len(points)):
-            if dist(points[i], points[j]) <= 2 * r_super:
+            if dist(points[i], points[j]) <= 4 * r_super:
                 edges.append([i, j])
                 # edges.append([j, i])
     

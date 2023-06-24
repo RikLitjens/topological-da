@@ -20,7 +20,7 @@ def prepare_edge_model():
 # Get the path to the data
 local_path = get_data_path()
 
-bag_id = 2
+bag_id = 0
 # Load the point cloud
 pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 
@@ -63,6 +63,8 @@ for i, primitive_edge in enumerate(edges):
 
 # get tips
 g = Graph(super_points, rich_edges)
+print(f'There are {len(g.find_connected_components(True))} components')
+
 g.plot()
 mst = g.kruskal()
 mst.plot()

@@ -42,8 +42,6 @@ class Edge:
         abs_dot_product_x = np.abs(dot_product_x)
         
         # Calculate the angle in radians
-        print(dot_product_z, dot_product_x)
-        print(edge_vector)
         if abs_dot_product_x != 0:
             angle_radians = np.arctan(abs_dot_product_z / abs_dot_product_x)
         else:
