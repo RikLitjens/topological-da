@@ -10,7 +10,8 @@ from popsearch.skeleton import LabelEnum
 from popsearch.mst import *
 from ripser import ripser
 import gc
-
+from numpy import random
+import matplotlib.pyplot as plt
 # test_mst()
 
 def prepare_edge_model():
@@ -55,7 +56,10 @@ def union_of_points(cluster1, cluster2):
         np array : concatenation of two input arrays
     
     """
-    return np.vstack((cluster1, cluster2))
+    union = np.vstack((cluster1, cluster2))
+    x = int(union.shape[0] * 0.2)
+    sampled = union[random.choice(union.shape[0],x,replace=False),:]
+    return sampled
 
 def calc_ttsc(pc) -> float:
     """
@@ -69,23 +73,6 @@ def calc_ttsc(pc) -> float:
     mx = np.amax(H0[:-1], axis=0)[1]
     return mx
 
-deaths = []
-print("Calculate convergence to singular compleces")
-print(len(edges), "edges to process")
-for e in edges:
-    t_start = time.time()
-    print("process edge:", e)
-    c1 = clusters[e[0]]
-    c2 = clusters[e[1]]
-    print(len(c1), len(c2))
-    cu = union_of_points(c1, c2)
-    # Ripser verwacht een input als (N, M) waar N>M en N,M > 0
-    mx = calc_ttsc(cu)
-    print("ttsc:", mx)
-    deaths.append(mx)
-    print("processed in:", time.time()-t_start, "seconds")
-
-print(deaths)
 
 def normalize_times(times):
     """Normalize the (persistence) times
@@ -101,6 +88,34 @@ def normalize_times(times):
     max_diff = max_time = min_time
     normalized_times = np.array([(time-min_time)/max_diff for time in times])
     return normalized_times
+
+deaths = []
+print("Calculate convergence to singular compleces")
+print(len(edges), "edges to process")
+
+for i, e in enumerate(edges):
+    print(f"edge: {i+1}/{len(edges)}")
+    t_start = time.time()
+    # print("process edge:", e)
+    c1 = clusters[e[0]]
+    c2 = clusters[e[1]]
+    # print(len(c1), len(c2))
+    cu = union_of_points(c1, c2)
+    # Ripser verwacht een input als (N, M) waar N>M en N,M > 0
+    mx = calc_ttsc(cu)
+    # print("ttsc:", mx)
+    deaths.append(mx)
+    # print("processed in:", time.time()-t_start, "seconds")
+
+print(np.mean(deaths))
+normalized_times = normalize_times(deaths)
+
+fig, axs = plt.subplots(1, 2, sharey=True, tight_layout=True)
+axs[0].hist(deaths, bins=20)
+axs[1].hist(normalized_times, bins=20)
+
+plt.show()
+
 
 # TODO: remove exit and 
 exit()
