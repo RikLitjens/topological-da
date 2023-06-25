@@ -12,6 +12,8 @@ from ripser import ripser
 import gc
 from numpy import random
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 # test_mst()
 
 def prepare_edge_model():
@@ -57,7 +59,7 @@ def union_of_points(cluster1, cluster2):
     
     """
     union = np.vstack((cluster1, cluster2))
-    x = int(union.shape[0] * 0.2)
+    x = int(union.shape[0] * 0.1)
     sampled = union[random.choice(union.shape[0],x,replace=False),:]
     return sampled
 
@@ -85,7 +87,7 @@ def normalize_times(times):
     """
     max_time = max(times)
     min_time = min(times)
-    max_diff = max_time = min_time
+    max_diff = max_time - min_time
     normalized_times = np.array([(time-min_time)/max_diff for time in times])
     return normalized_times
 
@@ -108,13 +110,31 @@ for i, e in enumerate(edges):
     # print("processed in:", time.time()-t_start, "seconds")
 
 print(np.mean(deaths))
-normalized_times = normalize_times(deaths)
+edge_confidences = normalize_times(deaths)
 
-fig, axs = plt.subplots(1, 2, sharey=True, tight_layout=True)
-axs[0].hist(deaths, bins=20)
-axs[1].hist(normalized_times, bins=20)
+# fig, axs = plt.subplots(1, 2, sharey=True, tight_layout=True)
+# axs[0].hist(deaths, bins=20)
+# axs[1].hist(edge_confidences, bins=20)
 
 plt.show()
+m = np.mean(deaths)
+edges = np.array(edges)
+reduced_e = super_points[edges[edge_confidences < m]]
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+for l in reduced_e:
+    p1,p2 = l
+    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], color='red')
+
+plt.show()
+
+# ax[0].scatter3D
+
+
+# Plot the edges before and after cleaning
+
 
 
 # TODO: remove exit and 
