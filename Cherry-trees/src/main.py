@@ -6,6 +6,7 @@ from deepnet.net_main import *
 import os
 from PIL import Image
 from popsearch.edge import Edge
+from popsearch.popsearch import PopSearch
 from popsearch.skeleton import LabelEnum
 from popsearch.mst import *
 from preprocess import clean_up, rotate_z_up
@@ -78,25 +79,30 @@ edge_confidences = model(X)
 print(len(super_points))
 print(len(edges))
 
-rich_edges = []
+edge_objects = []
 for i, primitive_edge in enumerate(edges):
     p_start = super_points[primitive_edge[0]]
     p_end = super_points[primitive_edge[1]]
     conf = edge_confidences[i]
     for label in LabelEnum:
-        rich_edges.append(Edge(p_start, p_end, conf, label))
+        edge_objects.append(Edge(p_start, p_end, conf, label))
 
 
 # get tips
-g = Graph(super_points, rich_edges)
+g = Graph(super_points, edge_objects)
 print(f'There are {len(g.find_connected_components(True))} components')
 
-g.plot()
+# g.plot()
 mst = g.kruskal()
 # mst.plot()
-mst_cut_tree, _ = cut_tree(super_points, rich_edges, 0.6)
+mst_cut_tree, _ = cut_tree(super_points, edge_objects, 0.6)
 tree_tips = mst_cut_tree.find_tree_tips()
-print('Tree tips')
-mst_cut_tree.plot(tips=tree_tips)
+# mst_cut_tree.plot(tips=tree_tips)
+
+
+# Do the pop search
+ps = PopSearch(super_points, edge_objects, tree_tips, tree_tips[0])
+ps.do_pop_search()
+
 
 

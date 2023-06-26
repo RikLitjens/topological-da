@@ -1,10 +1,68 @@
-from popsearch.skeleton import LabelEnum
+from enum import Enum
 import numpy as np
+
+class LabelEnum(Enum):
+    TRUNK = 0
+    SUPPORT = 1
+    LEADER = 2
+    SIDE = 3
+
+
+class EdgeCollection:
+    def __init__(self, super_points, edges) -> None:
+        self.superpoints = super_points
+         # create a map to track end points of edges
+        # and maps them to the edge itself
+        # for connectedness and 1 predecessor rule
+        # KEYS: endpoints of predecessor
+        #  used when adding an edge with p_start == p_end of predecessor
+        self.predecessor_map = {point: [] for point in self.superpoints}
+
+        # this can be a list
+        self.successor_map = {point: [] for point in self.superpoints}
+
+        # start-end pair
+        self.point_edge_map = {}
+
+        # Initialize maps with input edges
+        self.edges = []
+        for edge in edges:
+            self.add_edge(edge)
+        
+    def add_edge(self, edge):
+        self.edges.append(edge)
+        self.predecessor_map[edge.p_end].append(edge)
+        self.successor_map[edge.p_start].append(edge)
+        self.point_edge_map[(edge.p_start, edge.p_end)] = edge
+
+    def remove_last_edge(self):
+        # Get last added edge
+        removed_edge = self.edges[-1]
+        
+        # Remove the edge
+        self.edges = self.edges[:-1]
+
+        # Update maps
+        self.predecessor_map[removed_edge.p_end] = self.predecessor_map[removed_edge.p_end][:-1]
+        self.successor_map[removed_edge.p_start] = self.predecessor_map[removed_edge.p_start][:-1]
+
+    def get_unique_predecessor(self, edge):
+
+        # Unique means it cannot be ore than 1
+        if len(self.predecessor_map[edge.p_start]) > 1:
+            Exception("When calling this func, predecessors should not be higher than 1")
+
+        # No predecessor
+        if len(self.predecessor_map[edge.p_start]) == 0:
+            return None
+        
+        # Return the predecessor
+        return self.predecessor_map[edge.p_start][0]
 
 class Edge:
     def __init__(self, p_start, p_end, conf, label):
-        self.p_start = p_start
-        self.p_end = p_end
+        self.p_start = tuple(p_start)
+        self.p_end = tuple(p_end)
         self.label = label
         self.conf = conf
 
@@ -58,15 +116,15 @@ class Edge:
         
         return edge_length
     
-    def get_reward(self):
+    def get_reward(self, predecessor, base_node):
         """ 
         Get the optimizer score of this edge
         Based on the confidence value
         the turn penalty
         and the grow direction
         """
-        edge_score = self.get_edge_score(0)
-        turn_penalty = self.get_turn_penalty(self.proper_pre, np.pi / 4, 0.5, 2)
+        edge_score = self.get_edge_score(0.4)
+        turn_penalty = self.get_turn_penalty(predecessor, np.pi / 4, 0.5, 2) if self.p_start != base_node else 0
         growth_penalty = self.get_growth_penalty(np.pi / 4, 0.4, 1)
 
         return edge_score - turn_penalty - growth_penalty
@@ -112,12 +170,12 @@ class Edge:
         if edge.label == LabelEnum.LEADER:
             return np.pi / 2 - grow_angle
         
-    def get_dijkstra_weight(self):
+    def get_dijkstra_weight(self, predecessor):
         # cannot have a label in this step, so
         # remove to None
         label = self.label
         self.label = None 
-        score =  self.length() * (1 - self.conf) + self.get_turn_penalty(np.pi / 4, 0.5, 2)
+        score =  self.length() * (1 - self.conf) + self.get_turn_penalty(predecessor, np.pi / 4, 0.5, 2)
         self.label = label
         return score
     
