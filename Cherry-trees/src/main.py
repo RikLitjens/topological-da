@@ -5,16 +5,18 @@ from deepnet.neuralnet import *
 from deepnet.net_main import *
 import os
 from PIL import Image
-from popsearch.edge import Edge
+from popsearch.skeleton_components import Edge
 from popsearch.popsearch import PopSearch
 from popsearch.skeleton import LabelEnum
-from popsearch.mst import *
+from popsearch.tree_tips import *
 from preprocess import clean_up, rotate_z_up
 
 # test_mst()
 
+
 def prepare_edge_model():
     make_model()
+
 
 # prepare model: not necessary each time, as it is saved
 ####prepare_edge_model()
@@ -29,7 +31,9 @@ pcd = rotate_z_up(pcd)
 pcd = clean_up(pcd)
 
 # Create the coordinate frame mesh
-coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=[0, 0, 0])
+coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
+    size=1.0, origin=[0, 0, 0]
+)
 
 # Combine the point cloud and coordinate frame into a single geometry list
 geometries = [pcd, coord_frame]
@@ -62,7 +66,7 @@ edge_histograms = edge_evaluation(edges, super_points, clusters, 0.1, bag_id)
 
 # Load the saved model
 model = NET()
-model_path = os.path.join(os.getcwd(), 'Cherry-trees/src/deepnet/model.tree')
+model_path = os.path.join(os.getcwd(), "Cherry-trees/src/deepnet/model.tree")
 model.load_state_dict(torch.load(model_path))
 
 X = torch.tensor(edge_histograms).reshape(-1, 1, 32, 16).float()
@@ -90,7 +94,7 @@ for i, primitive_edge in enumerate(edges):
 
 # get tips
 g = Graph(super_points, edge_objects)
-print(f'There are {len(g.find_connected_components(True))} components')
+print(f"There are {len(g.find_connected_components(True))} components")
 
 # g.plot()
 mst = g.kruskal()
@@ -103,6 +107,3 @@ tree_tips = mst_cut_tree.find_tree_tips()
 # Do the pop search
 ps = PopSearch(super_points, edge_objects, tree_tips, tree_tips[0])
 ps.do_pop_search()
-
-
-
