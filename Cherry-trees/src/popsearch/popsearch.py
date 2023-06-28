@@ -2,6 +2,7 @@ from popsearch.pop_helpers import create_rank_dict
 import random
 from collections import Counter
 from popsearch.skeleton import Skeleton
+from popsearch.skeleton_components import Edge
 
 
 class PopSearch:
@@ -27,20 +28,36 @@ class PopSearch:
 
     def initialize_population(self):
         for _ in range(self.K):
-            self.skeletons_k.append(Skeleton(self.superpoints, self.raw_edges, self.base_node))
+            self.skeletons_k.append(
+                Skeleton(
+                    [p for p in self.superpoints],
+                    [Edge(ed.p1, ed.p2, ed.conf, ed.label) for ed in self.raw_edges],
+                    self.base_node,
+                )
+            )
 
     def create_next_gen(self):
         weights = self.get_weights()
-        candidate_pairs = list(weights.keys())
+        candidate_skel_edge_pairs = list(weights.keys())
         probabilities = list(weights.values())
 
-        print(len(candidate_pairs))
+        print(len(candidate_skel_edge_pairs))
         print(len(probabilities))
 
         chosen = []
         while len(chosen) != self.K:
             print(self.K - len(chosen))
-            chosen += random.choices(candidate_pairs, weights=probabilities, k=self.K - len(chosen))
+            print(len(chosen))
+            print(
+                len(
+                    random.choices(
+                        candidate_skel_edge_pairs, weights=probabilities, k=self.K - len(chosen)
+                    )
+                )
+            )
+            chosen += random.choices(
+                candidate_skel_edge_pairs, weights=probabilities, k=self.K - len(chosen)
+            )
             counts = Counter(chosen)
 
             # violators (occuring more than k_rep times)
@@ -57,7 +74,8 @@ class PopSearch:
         # update generation
         self.skeletons_k = []
         for candidate_pair in chosen:
-            candidate_pair[0].add_eligible_edge(candidate_pair[1])
+            print("Updating this generation")
+            candidate_pair[0].include_eligible_edge(candidate_pair[1])
             self.skeletons_k.append(candidate_pair[0])
 
     def get_weights(self):
@@ -69,7 +87,7 @@ class PopSearch:
 
         # define rank_skelly
         for skel in self.skeletons_k:
-            rank_skeleton = ranks_skeleton
+            rank_skeleton = ranks_skeleton[skel]
             n_tip = random.choice(self.tree_tips)
             eligible_edges = skel.get_eligible(n_tip)
             ranks_edges = create_rank_dict(lambda ed: skel.get_potential(ed), eligible_edges)

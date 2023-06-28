@@ -22,7 +22,8 @@ class Skeleton:
         ]
 
         # Base of the tree, from here it will grow up
-        self.base_node = Point(base_node, is_base=True)
+        self.base_node = self.p_to_points_map[base_node]
+        self.base_node.is_base = True
 
         # Open points are the points at the outer edge of the skeleton
         # Here we ccan attach new edges to grow the skeleton
@@ -100,13 +101,14 @@ class Skeleton:
         print(f"Len initial {len(initial_candidates)}")
         # First filter out the basic violations
         secondary_candidates = []
+        eligible = True
         for edge in initial_candidates:
             # check for basic topology violations
-            if self.violate_basic_topology(edge):
+            if self.violates_basic_topology(edge):
                 eligible = False
 
             # and label violation
-            if self.violate_label_topology(edge):
+            if self.violates_label_topology(edge):
                 eligible = False
 
             # if elegible add to the list
@@ -114,10 +116,20 @@ class Skeleton:
                 secondary_candidates.append(edge)
 
         print(f"Len secondary {len(secondary_candidates)}")
+
         # Then use Dijkstra to fix the final constraint
+        # We cannot use the original points,
+        # This would destroy the skeleton structure
+        dijkstra_points = [Point(point.p) for point in self.superpoints]
+        dijkstra_p_to_points_map = {point.p: point for point in dijkstra_points}
         dijkstra: Dijkstra = Dijkstra(
-            [Point(point.p, point.neighbouring_edges) for point in self.superpoints],
-            [EdgeSkeleton(edge, Point(edge.p1), Point(edge.p2)) for edge in self.all_edges],
+            dijkstra_p_to_points_map.values(),
+            [
+                EdgeSkeleton(
+                    edge, dijkstra_p_to_points_map[edge.p1], dijkstra_p_to_points_map[edge.p2]
+                )
+                for edge in self.all_edges
+            ],
             n_tip,
         )
 
@@ -130,16 +142,17 @@ class Skeleton:
         # Define final constraint
         eligible_edges = []
         for edge in secondary_candidates:
+            # Tip of the candidate edge is the target for our dijkstra
             edge.dijk = (n_tip, dijkstra.find_path(edge.point2))  # save for possible later use
 
             # Only eligible if there exists a path
-            if len(edge.dijk[0]) > 0:
+            if len(edge.dijk[1]) > 0:
                 eligible_edges.append(edge)
 
         print(f"Len eligible {len(secondary_candidates)}")
         return eligible_edges
 
-    def violates_basic_topology(self, candidate_edge):
+    def violates_basic_topology(self, candidate_edge: EdgeSkeleton):
         # The first principle of having a connected out-tree
         # Is handled by the open-point and neighbour edges mechanism
 
@@ -149,14 +162,14 @@ class Skeleton:
 
         return False
 
-    def violate_label_topology(self, candidate_edge: EdgeSkeleton):
+    def violates_label_topology(self, candidate_edge: EdgeSkeleton):
         virtual_predecessor = (
             candidate_edge.point1.incoming_edge
         )  # Virtual because it is only a candidate, not an actual edge
         virtual_successors = candidate_edge.point1.outgoing_edges + [candidate_edge]
 
         # label progression
-        if candidate_edge.label < virtual_predecessor.label:
+        if not candidate_edge.point1.is_base and candidate_edge.label < virtual_predecessor.label:
             return True
 
         # label linearity
@@ -174,7 +187,11 @@ class Skeleton:
                 return True
 
         # Trunk_support split, check if relevant
-        if len(virtual_successors) > 0 and virtual_predecessor.label == LabelEnum.TRUNK:
+        if (
+            len(virtual_successors) > 0
+            and not candidate_edge.point1.is_base
+            and virtual_predecessor.label == LabelEnum.TRUNK
+        ):
             # check if successors are all trunks
             # check if none of them are trunks
             # count the support succs
@@ -216,6 +233,13 @@ class Skeleton:
         self.included_edges.append(edge)
 
         # Update open and closed lists
+        print(50 * "-")
+        print(id(self))
+        print(self.open_points, id(self.open_points))
+        print(edge.point1)
+        print(edge.point2)
+        print(50 * "-")
+
         self.open_points.remove(edge.point1)
         self.closed_points.append(edge.point1)
 
@@ -267,19 +291,26 @@ class Skeleton:
 
         # get first two potential components
         new_skel_score = self.get_skel_score()
-        dijk_edge_score = sum([ed.get_edge_score() for ed in eligible_edge.dijk[1]])
+        dijk_edge_score = sum([ed.get_edge_score(0.4) for ed in eligible_edge.dijk[1]])
 
         # last one requires more work
         dijk_turn_penalties = [0]  # Initial turn penalty is 0 (Start of Path has no predecessor)
         for i, ed in enumerate(eligible_edge.dijk[1]):
+            # Ensure index
+            if i == (len(eligible_edge.dijk[1]) - 1):
+                break
+
+            # Get turn penalty
             next_edge = eligible_edge.dijk[1][i + 1]
-            dijk_turn_penalties.append(ed.get_turn_penalty(next_edge, np.pi / 4, 0.5, 2))
+            dijk_turn_penalties.append(
+                next_edge.get_turn_penalty(np.pi / 4, 0.5, 2, predecessor=ed)
+            )
 
         # Sort the list in descending order
         sorted_penalties = sorted(dijk_turn_penalties, reverse=True)
 
         # Drop the highest values
-        n_dropped = 2 - eligible_edge.label
+        n_dropped = 2 - eligible_edge.label.value
         dropped_penalties = sorted_penalties[n_dropped:]
 
         # calculate final potantial component

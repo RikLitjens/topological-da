@@ -12,6 +12,11 @@ class Dijkstra:
         # Points in the dijkstra environment
         self.target_point_map = {}
 
+        # Initalize neighbours within the dijkstra environment
+        for edge in self.edges:
+            edge.point1.add_neighbouring_edge(edge)
+            edge.point1.add_neighbouring_edge(edge)
+
     def update_target_points_map(self, new_neighbour_point, target_points):
         for target_point in target_points:
             if target_point.p == new_neighbour_point.p:
@@ -61,6 +66,8 @@ class Dijkstra:
                     # Put points in right order and update predecessor
                     neighbour_edge.point1 = current_point
                     neighbour_edge.point2 = neighbour_point
+                    neighbour_edge.p1 = current_point.p
+                    neighbour_edge.p2 = neighbour_point.p
                     neighbour_edge.predecessor = current_point.incoming_edge
 
                     self.update_target_points_map(neighbour_edge.point2, target_points)
@@ -70,6 +77,11 @@ class Dijkstra:
     def find_path(self, target_point):
         """Return the shortest path"""
         edges_path = []
+
+        # If it is not included in the map
+        # Dijkstra has not reached this target
+        if target_point not in self.target_point_map:
+            return edges_path
 
         # Convert the target point to the local Dijkstra point
         current_incoming = self.target_point_map[target_point].incoming_edge
