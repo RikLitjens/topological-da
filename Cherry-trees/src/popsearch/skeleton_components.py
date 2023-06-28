@@ -11,17 +11,17 @@ class LabelEnum(Enum):
 
 
 class Point:
-    def __init__(self, p, is_base=False) -> None:
+    def __init__(self, p, is_base=False, neighbouring_edges=[]) -> None:
         self.p = p
 
         # Only set when point is closed
-        self.incoming = None
+        self.incoming_edge = None
 
         # Updated dynamically throughout the skeletonization process
-        self.outgoing = []
+        self.outgoing_edges = []
 
         # Neighbouring edges of the node
-        self.neighbouring_edges = []
+        self.neighbouring_edges = neighbouring_edges
 
         # Whether it is a base or not
         self.is_base = is_base
@@ -30,10 +30,13 @@ class Point:
         self.neighbouring_edges = neighbouring_edges
 
     def set_incoming_edge(self, incoming):
-        self.incoming = incoming
+        self.incoming_edge = incoming
 
     def add_outgoing_edge(self, outgoing):
-        self.outgoing.append(outgoing)
+        self.outgoing_edges.append(outgoing)
+
+    def remove_last_outgoing_edge(self):
+        self.outgoing_edges = self.outgoing_edges[:-1]
 
     def __eq__(self, other):
         if isinstance(other, Point):
@@ -97,75 +100,6 @@ class Edge:
 
         return edge_length
 
-    def get_reward(self, predecessor, base_node):
-        """
-        Get the optimizer score of this edge
-        Based on the confidence value
-        the turn penalty
-        and the grow direction
-        """
-        edge_score = self.get_edge_score(0.4)
-        turn_penalty = (
-            self.get_turn_penalty(predecessor, np.pi / 4, 0.5, 2)
-            if self.p1 != base_node
-            else 0
-        )
-        growth_penalty = self.get_growth_penalty(np.pi / 4, 0.4, 1)
-
-        return edge_score - turn_penalty - growth_penalty
-
-    def get_edge_score(self, alpha):
-        return self.length() * (1 - ((1 - self.conf) / (1 - alpha)))
-
-    def get_turn_penalty(self, pre, theta, c_turn, p_turn):
-        """
-        Turning edges are not wanted,
-        straight is better (no offence to the lgbt)
-        """
-        if self.label is not None and self.label != pre.label:
-            return 0
-
-        if self.angle_with(pre) <= theta:
-            return 0
-
-        return c_turn * (self.angle_with(pre) - theta) ** p_turn
-
-    def get_growth_penalty(self, theta, c_grow, p_grow):
-        """ "
-        Returns a penalty when the label and grow direction do not match
-        """
-        if self.label in [LabelEnum.LEADER, LabelEnum.SUPPORT]:
-            return 0
-        if self.get_delta_target() <= theta:
-            return 0
-
-        return c_grow * (self.get_delta_target() - theta) ** p_grow
-
-    def get_delta_target(self, edge):
-        """
-        Helper function that returns the angle
-        of an edge to its label
-        i.e. support has to be horizontal
-        and leader vertical
-        """
-        grow_angle = edge.angle_with_x()
-        if edge.label == LabelEnum.SUPPORT:
-            return grow_angle
-
-        if edge.label == LabelEnum.LEADER:
-            return np.pi / 2 - grow_angle
-
-    def get_dijkstra_weight(self, predecessor):
-        # cannot have a label in this step, so
-        # remove to None
-        label = self.label
-        self.label = None
-        score = self.length() * (1 - self.conf) + self.get_turn_penalty(
-            predecessor, np.pi / 4, 0.5, 2
-        )
-        self.label = label
-        return score
-
     def __str__(self) -> str:
         return f"<<Edge {self.p1}-{self.p2}, conf={self.conf}, label={self.label}>>"
 
@@ -193,9 +127,77 @@ class EdgeSkeleton(Edge):
 
         # not yet known at start
         self.dijk = (None, [])  # list with tip n and all edges to it from self
-        self.predecessor: EdgeSkeleton = (
-            None  # Initially None, but set once skeleton is built
+        self.predecessor: EdgeSkeleton = None  # Initially None, but set once skeleton is built
+        self.successors: List[EdgeSkeleton] = []  # Initially None, but set when skeleton is built
+
+    def get_reward(self, base_node):
+        """
+        Get the optimizer score of this edge
+        Based on the confidence value
+        the turn penalty
+        and the grow direction
+        """
+        edge_score = self.get_edge_score(0.4)
+        turn_penalty = (
+            self.get_turn_penalty(self.predecessor, np.pi / 4, 0.5, 2)
+            if self.p1 != base_node
+            else 0
         )
-        self.successors: List[
-            EdgeSkeleton
-        ] = []  # Initially None, but set when skeleton is built
+        growth_penalty = self.get_growth_penalty(np.pi / 4, 0.4, 1)
+
+        return edge_score - turn_penalty - growth_penalty
+
+    def get_edge_score(self, alpha):
+        return self.length() * (1 - ((1 - self.conf) / (1 - alpha)))
+
+    def get_turn_penalty(self, theta, c_turn, p_turn):
+        """
+        Turning edges are not wanted,
+        straight is better (no offence to the lgbt)
+        """
+        if self.label is not None and self.label != self.predecessor.label:
+            return 0
+
+        if self.angle_with(self.predecessor) <= theta:
+            return 0
+
+        return c_turn * (self.angle_with(self.predecessor) - theta) ** p_turn
+
+    def get_growth_penalty(self, theta, c_grow, p_grow):
+        """ "
+        Returns a penalty when the label and grow direction do not match
+        """
+        if self.label in [LabelEnum.LEADER, LabelEnum.SUPPORT]:
+            return 0
+        if self.get_delta_target() <= theta:
+            return 0
+
+        return c_grow * (self.get_delta_target() - theta) ** p_grow
+
+    def get_delta_target(self, edge):
+        """
+        Helper function that returns the angle
+        of an edge to its label
+        i.e. support has to be horizontal
+        and leader vertical
+        """
+        grow_angle = edge.angle_with_x()
+        if edge.label == LabelEnum.SUPPORT:
+            return grow_angle
+
+        if edge.label == LabelEnum.LEADER:
+            return np.pi / 2 - grow_angle
+
+    def get_dijkstra_weight(self, start_point):
+        # cannot have a label in this step, so
+        # remove to None
+        label = self.label
+        self.label = None
+        score = (
+            self.length() * (1 - self.conf)
+            + self.get_turn_penalty(self.predecessor, np.pi / 4, 0.5, 2)
+            if self.point1 != start_point
+            else 0
+        )
+        self.label = label
+        return score

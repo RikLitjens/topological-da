@@ -27,8 +27,6 @@ def cut_tree(points, edges, alpha_tip):
 
 
 # This is an example for testing the MST!
-
-
 def test_mst():
     vertices = [[0, 0, 0], [0, 2, 3], [0, 1, 5], [0, -1, 7], [0, 10, 6], [0, 10, 8]]
     edg = [
