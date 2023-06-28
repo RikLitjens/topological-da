@@ -11,7 +11,7 @@ class LabelEnum(Enum):
 
 
 class Point:
-    def __init__(self, p, is_base=False, neighbouring_edges=[]) -> None:
+    def __init__(self, p: tuple, is_base: bool = False) -> None:
         self.p = p
 
         # Only set when point is closed
@@ -21,13 +21,13 @@ class Point:
         self.outgoing_edges = []
 
         # Neighbouring edges of the node
-        self.neighbouring_edges = neighbouring_edges
+        self.neighbouring_edges = []
 
         # Whether it is a base or not
         self.is_base = is_base
 
-    def set_neighbouring_edges(self, neighbouring_edges):
-        self.neighbouring_edges = neighbouring_edges
+    def add_neighbouring_edge(self, neighbouring_edge):
+        self.neighbouring_edges.append(neighbouring_edge)
 
     def set_incoming_edge(self, incoming):
         self.incoming_edge = incoming
@@ -45,6 +45,16 @@ class Point:
 
     def __hash__(self) -> int:
         return hash(self.p)
+
+    def __repr__(self) -> str:
+        return f"P{self.p}-{id(self)}"
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+    def __lt__(self, other):
+        if isinstance(other, Point):
+            return self.p < other.p
 
 
 class Edge:
@@ -101,7 +111,7 @@ class Edge:
         return edge_length
 
     def __str__(self) -> str:
-        return f"<<Edge {self.p1}-{self.p2}, conf={self.conf}, label={self.label}>>"
+        return f"<<Edge {self.point1}-{self.point2}, conf={self.conf}, label={self.label}>>"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -113,17 +123,19 @@ class Edge:
         return self.get_weight() < other.get_weight()
 
     def __eq__(self, other: object) -> bool:
-        return self.p1 == other.p1 and self.p2 == other.p2 and self.label == other.label
-
-    def __hash__(self) -> int:
-        return hash((self.p1, self.p2, self.label))
+        return (
+            other is not None
+            and self.p1 == other.p1
+            and self.p2 == other.p2
+            and self.label == other.label
+        )
 
 
 class EdgeSkeleton(Edge):
-    def __init__(self, edge):
+    def __init__(self, edge, point1, point2):
         super().__init__(edge.p1, edge.p2, edge.conf, edge.label)
-        self.point1 = Point(self.p1)
-        self.point2 = Point(self.p2)
+        self.point1 = point1
+        self.point2 = point2
 
         # not yet known at start
         self.dijk = (None, [])  # list with tip n and all edges to it from self
@@ -194,9 +206,8 @@ class EdgeSkeleton(Edge):
         label = self.label
         self.label = None
         score = (
-            self.length() * (1 - self.conf)
-            + self.get_turn_penalty(self.predecessor, np.pi / 4, 0.5, 2)
-            if self.point1 != start_point
+            self.length() * (1 - self.conf) + self.get_turn_penalty(np.pi / 4, 0.5, 2)
+            if self.point1 != start_point and self.point2 != start_point
             else 0
         )
         self.label = label

@@ -10,7 +10,7 @@ from deepnet.net_main import CherryLoader
 import os
 
 
-def edge_evaluation(edges, points, clusters, r_super, bag):    
+def edge_evaluation(edges, points, clusters, r_super, bag):
     total_cluster = []
     # Convert points to new coordinate system
     histograms = []
@@ -23,19 +23,17 @@ def edge_evaluation(edges, points, clusters, r_super, bag):
         x_axis_new, y_axis_new, z_axis_new = new_coord_system(n_i, n_j, total_cluster)
 
         # Find rotation from x, y, z to x_axis_new, y_axis_new, a_axis_new
-        # Because the axes are unit vectors (1, 0, 0), (0, 1, 0) and (0, 0, 1), 
+        # Because the axes are unit vectors (1, 0, 0), (0, 1, 0) and (0, 0, 1),
         # the rotation matrix is equal to the new axes in order, transposed due to it being a rotation from new axes to old axes
         rotation_matrix = np.array([x_axis_new, y_axis_new, z_axis_new])
 
         for i in range(len(total_cluster)):
             total_cluster[i] = np.matmul(rotation_matrix, total_cluster[i])
-        
+
         max_x = max(total_cluster[:, 0])
         min_x = min(total_cluster[:, 0])
         max_y = max(total_cluster[:, 1])
         min_y = min(total_cluster[:, 1])
-
-        print(max_x, min_x, max_y, min_y)
 
         # Initialize the 32x16 histogram for the CNN and normalize it to 0 - 255 (image color range)
         histogram = make_greyscale(total_cluster, max_x, min_x, max_y, min_y)
@@ -52,6 +50,7 @@ def edge_evaluation(edges, points, clusters, r_super, bag):
 
     return histograms
 
+
 def get_edges(points, r_super):
     edges = []
     # Define the edges
@@ -60,8 +59,9 @@ def get_edges(points, r_super):
             if dist(points[i], points[j]) <= 4 * r_super:
                 edges.append([i, j])
                 # edges.append([j, i])
-    
+
     return edges
+
 
 def new_coord_system(p_o, p_t, total_cluster):
     # X-axis is equal to the direction of the edge
@@ -86,15 +86,16 @@ def new_coord_system(p_o, p_t, total_cluster):
 
     return x_axis_new, y_axis_new, z_axis_new
 
+
 def make_greyscale(total_cluster, max_x, min_x, max_y, min_y):
     histogram = np.zeros((32, 16))
     for i in range(len(total_cluster)):
         greyscale_x = (total_cluster[i][0] - min_x) / (max_x - min_x)
         greyscale_y = (total_cluster[i][1] - min_y) / (max_y - min_y)
-        
-        if (greyscale_x == None):
+
+        if greyscale_x == None:
             print(f"This x_position is {total_cluster[i][0]} but results in NaN")
-        if (greyscale_y == None):
+        if greyscale_y == None:
             print(f"This y_position is {total_cluster[i][1]} but results in NaN")
         greyscale_x = int(greyscale_x * 32)
         greyscale_y = int(greyscale_y * 16)
@@ -103,7 +104,7 @@ def make_greyscale(total_cluster, max_x, min_x, max_y, min_y):
             greyscale_x = 31
         if greyscale_y > 15:
             greyscale_y = 15
-        
+
         histogram[greyscale_x][greyscale_y] += 1
 
     # Normalize the histogram for a greyscale image
@@ -111,6 +112,7 @@ def make_greyscale(total_cluster, max_x, min_x, max_y, min_y):
     histogram = histogram * max_hist
 
     return histogram
+
 
 def test_image_creation():
     # path = fr"Cherry-trees\images\Training\bag0histogram_0.png"
@@ -121,8 +123,8 @@ def test_image_creation():
     for i in range(len(files)):
         bag = max(0, math.floor(i / 200))
         number = i - bag * 200
-        histogram = get_image(fr"Cherry-trees\images\Training\{files[i]}")
+        histogram = get_image(rf"Cherry-trees\images\Training\{files[i]}")
         histograms = CherryLoader().explode_data(histogram, 3)
         for i in range(len(histograms)):
-            img = Image.fromarray(histograms[i].astype(np.uint8), 'L')
-            img.save(fr"Cherry-trees\images\exploded\bag{bag}histogram{number}resample{i}.png")
+            img = Image.fromarray(histograms[i].astype(np.uint8), "L")
+            img.save(rf"Cherry-trees\images\exploded\bag{bag}histogram{number}resample{i}.png")

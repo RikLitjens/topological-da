@@ -1,4 +1,5 @@
 from queue import PriorityQueue
+import time
 
 
 class Dijkstra:
@@ -19,6 +20,8 @@ class Dijkstra:
     def dijkstra(self, target_points):
         """Use dijkstra"""
 
+        print(f"Starting Dijkstra")
+        start_time = time.time()
         D = {point: float("inf") for point in self.points}
         D[self.start_point] = 0
 
@@ -33,7 +36,7 @@ class Dijkstra:
             for neighbour_edge in current_point.neighbouring_edges:
                 # Temp set predecessor and remove to calculate weight
                 real_pred = neighbour_edge.predecessor
-                neighbour_edge.predecessor = current_point.incoming
+                neighbour_edge.predecessor = current_point.incoming_edge
                 distance = neighbour_edge.get_dijkstra_weight(self.start_point)
                 neighbour_edge.predecessor = real_pred
 
@@ -58,18 +61,20 @@ class Dijkstra:
                     # Put points in right order and update predecessor
                     neighbour_edge.point1 = current_point
                     neighbour_edge.point2 = neighbour_point
-                    neighbour_edge.predecessor = current_point.incoming
+                    neighbour_edge.predecessor = current_point.incoming_edge
 
                     self.update_target_points_map(neighbour_edge.point2, target_points)
+
+        print(f"Dijkstra completed in {time.time() - start_time} secs")
 
     def find_path(self, target_point):
         """Return the shortest path"""
         edges_path = []
 
         # Convert the target point to the local Dijkstra point
-        current_incoming = self.target_point_map[target_point].incoming
+        current_incoming = self.target_point_map[target_point].incoming_edge
         while current_incoming is not None:
             edges_path.append(current_incoming)
-            current_incoming = current_incoming.point1.incoming
+            current_incoming = current_incoming.point1.incoming_edge
 
         return edges_path

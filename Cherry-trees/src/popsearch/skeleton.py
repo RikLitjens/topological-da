@@ -9,12 +9,17 @@ import copy
 class Skeleton:
     def __init__(self, superpoints, all_edges, base_node) -> None:
         # define suerpoints and raw edges (not added yet but could be)
-        self.superpoints: List[Point] = [Point(tuple(p)) for p in superpoints]
+
+        self.p_to_points_map = {tuple(p): Point(tuple(p)) for p in superpoints}
+        self.superpoints: List[Point] = self.p_to_points_map.values()
 
         # All edges that are found using the superpoint graph generation
         # These will be filtered to find the skeleton
 
-        self.all_edges = [EdgeSkeleton(edge) for edge in all_edges]
+        self.all_edges = [
+            EdgeSkeleton(edge, self.p_to_points_map[edge.p1], self.p_to_points_map[edge.p2])
+            for edge in all_edges
+        ]
 
         # Base of the tree, from here it will grow up
         self.base_node = Point(base_node, is_base=True)
@@ -37,39 +42,62 @@ class Skeleton:
         Create datastructures to speed up search later
         """
         # Update neighbours
+        # count = 0
+        # old_edge = self.all_edges[0]
         for edge in self.all_edges:
-            edge.point1.neighbouring_edges.append(edge)
-            edge.point2.neighbouring_edges.append(edge)
+            # print(50 * "-")
+            # print(edge)
+            # print(edge.point1)
+            # print(edge.point2)
+            # print(old_edge == edge)
+            # print(edge.point1 == edge.point2)
+            # print(len(edge.point1.neighbouring_edges))
+            # print(len(edge.point2.neighbouring_edges))
+            edge.point1.add_neighbouring_edge(edge)
+            edge.point2.add_neighbouring_edge(edge)
+            # print(edge.point1.neighbouring_edges)
+            # print(edge.point2.neighbouring_edges)
+            # print(len(edge.point1.neighbouring_edges))
+            # print(len(edge.point2.neighbouring_edges))
+            # print(50 * "-")
+            # old_edge = edge
+            # count += 1
+
+            # if count == 10:
+            #     assert False
 
     def get_eligible(self, n_tip):
         """Determines which edges can be added (i.e. dont violate the rules)"""
+
+        # Convert n_tip to its point counterpart
+        n_tip = self.p_to_points_map[n_tip]
 
         # First we determine which edges from open points
         # Are in our list
         # Add all neighbour edges of open points
         initial_candidates = []
         for point in self.open_points:
-            # Find all neighbours and if the incoming is not None (base node)
-            # Add Remove the incoming from this list
-            # Leaving only potential
-            neighbour_edges = copy.deepcopy(point.neighbouring_edges)
-            if point.incoming_edge is not None:
-                neighbour_edges.remove(point.incoming_edge)
+            for edge in point.neighbouring_edges:
+                # Do not add incoming
+                if edge == point.incoming_edge:
+                    continue
 
-            # Swap point 1 and point 2 in such a way that
-            # Point 1 is the current open point (<point>)
-            for edge in neighbour_edges:
+                # Add edge
+                initial_candidates.append(edge)
+
+                # Swap point 1 and point 2 in such a way that
+                # Point 1 is the current open point (<point>)
                 if edge.point2 == point:
-                    # Swap
                     edge.point1, edge.point2 = edge.point2, edge.point1
                     edge.p1, edge.p2 = edge.p2, edge.p1
                     continue
 
                 if edge.point1 != point:
+                    print(edge)
+                    print(point)
                     raise Exception("These should be equal")
 
-            initial_candidates += neighbour_edges
-
+        print(f"Len initial {len(initial_candidates)}")
         # First filter out the basic violations
         secondary_candidates = []
         for edge in initial_candidates:
@@ -85,10 +113,11 @@ class Skeleton:
             if eligible:
                 secondary_candidates.append(edge)
 
+        print(f"Len secondary {len(secondary_candidates)}")
         # Then use Dijkstra to fix the final constraint
         dijkstra: Dijkstra = Dijkstra(
             [Point(point.p, point.neighbouring_edges) for point in self.superpoints],
-            [EdgeSkeleton(edge) for edge in self.all_edges],
+            [EdgeSkeleton(edge, Point(edge.p1), Point(edge.p2)) for edge in self.all_edges],
             n_tip,
         )
 
@@ -107,6 +136,7 @@ class Skeleton:
             if len(edge.dijk[0]) > 0:
                 eligible_edges.append(edge)
 
+        print(f"Len eligible {len(secondary_candidates)}")
         return eligible_edges
 
     def violates_basic_topology(self, candidate_edge):
