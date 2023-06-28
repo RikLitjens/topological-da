@@ -27,9 +27,10 @@ class Dijkstra:
 
             for neighbour_edge in current_point.neighbouring_edges:
                 # Temp set predecessor and remove to calculate weight
+                real_pred = neighbour_edge.predecessor
                 neighbour_edge.predecessor = current_point.incoming
                 distance = neighbour_edge.get_dijkstra_weight(self.start_point)
-                neighbour_edge.predecessor = None
+                neighbour_edge.predecessor = real_pred
 
                 # Determine neighbour_point
                 # (remember point1 and point2 only mean something when this is determined explicitely)
