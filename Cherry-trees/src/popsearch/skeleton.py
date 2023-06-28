@@ -1,6 +1,6 @@
 from typing import List
 from popsearch.skeleton_components import Point, LabelEnum, EdgeSkeleton
-from popsearch.inverted_dijkstra import InvertedDijkstra
+from popsearch.dijkstra import Dijkstra
 
 import numpy as np
 import copy
@@ -86,7 +86,7 @@ class Skeleton:
                 secondary_candidates.append(edge)
 
         # Then use Dijkstra to fix the final constraint
-        inv_d = Dijkstra(
+        dijkstra: Dijkstra = Dijkstra(
             [Point(point.p, point.neighbouring_edges) for point in self.superpoints],
             [EdgeSkeleton(edge) for edge in self.all_edges],
             n_tip,
@@ -95,13 +95,19 @@ class Skeleton:
         # The targets are the endpoints of the candidate edges
         target_points = [edge.point2 for edge in secondary_candidates]
 
-        raw_edge.dijk = (n_tip, dijk)  # save for possible later use
+        # Execute the dijkstra algorithm
+        dijkstra.dijkstra(target_points)
 
-        # check for first property of path existence
-        if min_distance == float("inf"):
-            eligible = False
+        # Define final constraint
+        eligible_edges = []
+        for edge in secondary_candidates:
+            edge.dijk = (n_tip, dijkstra.find_path(edge.point2))  # save for possible later use
 
-        return initial_candidates
+            # Only eligible if there exists a path
+            if len(edge.dijk[0]) > 0:
+                eligible_edges.append(edge)
+
+        return eligible_edges
 
     def violates_basic_topology(self, candidate_edge):
         # The first principle of having a connected out-tree
@@ -234,7 +240,7 @@ class Skeleton:
         dijk_edge_score = sum([ed.get_edge_score() for ed in eligible_edge.dijk[1]])
 
         # last one requires more work
-        dijk_turn_penalties = []
+        dijk_turn_penalties = [0]  # Initial turn penalty is 0 (Start of Path has no predecessor)
         for i, ed in enumerate(eligible_edge.dijk[1]):
             next_edge = eligible_edge.dijk[1][i + 1]
             dijk_turn_penalties.append(ed.get_turn_penalty(next_edge, np.pi / 4, 0.5, 2))

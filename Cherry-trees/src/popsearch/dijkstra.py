@@ -7,9 +7,16 @@ class Dijkstra:
         self.edges = edges
         self.start_point = start_point
 
-        # Params filled in dijkstra
+        # Target points in the skeleton are not the same as the
+        # Points in the dijkstra environment
+        self.target_point_map = {}
 
-    def dijkstra(self):
+    def update_target_points_map(self, new_neighbour_point, target_points):
+        for target_point in target_points:
+            if target_point.p == new_neighbour_point.p:
+                self.target_point_map[target_point] = new_neighbour_point
+
+    def dijkstra(self, target_points):
         """Use dijkstra"""
 
         D = {point: float("inf") for point in self.points}
@@ -52,3 +59,17 @@ class Dijkstra:
                     neighbour_edge.point1 = current_point
                     neighbour_edge.point2 = neighbour_point
                     neighbour_edge.predecessor = current_point.incoming
+
+                    self.update_target_points_map(neighbour_edge.point2, target_points)
+
+    def find_path(self, target_point):
+        """Return the shortest path"""
+        edges_path = []
+
+        # Convert the target point to the local Dijkstra point
+        current_incoming = self.target_point_map[target_point].incoming
+        while current_incoming is not None:
+            edges_path.append(current_incoming)
+            current_incoming = current_incoming.point1.incoming
+
+        return edges_path
