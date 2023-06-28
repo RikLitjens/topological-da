@@ -12,7 +12,6 @@ class Dijkstra:
     def dijkstra(self):
         """Use dijkstra"""
 
-        visited = []
         D = {point: float("inf") for point in self.points}
         D[self.start_point] = 0
 
@@ -23,7 +22,6 @@ class Dijkstra:
         # Do dijkstra
         while not q.empty():
             (dist, current_point) = q.get()
-            visited.append(current_point)
 
             for neighbour_edge in current_point.neighbouring_edges:
                 # Temp set predecessor and remove to calculate weight
@@ -40,18 +38,17 @@ class Dijkstra:
                     else neighbour_edge.point1
                 )
 
-                if neighbour_point not in visited:
-                    old_cost = D[neighbour_point]
-                    new_cost = D[current_point] + distance
-                    if new_cost < old_cost:
-                        q.put((new_cost, neighbour_point))
-                        D[neighbour_point] = new_cost
+                old_cost = D[neighbour_point]
+                new_cost = D[current_point] + distance
+                if new_cost < old_cost:
+                    q.put((new_cost, neighbour_point))
+                    D[neighbour_point] = new_cost
 
-                        # Update data for the node
-                        neighbour_point.set_incoming_edge(neighbour_edge)
-                        current_point.add_outgoing_edge(neighbour_edge)
+                    # Update data for the node
+                    neighbour_point.set_incoming_edge(neighbour_edge)
+                    current_point.add_outgoing_edge(neighbour_edge)
 
-                        # Put points in right order and update predecessor
-                        neighbour_edge.point1 = current_point
-                        neighbour_edge.point2 = neighbour_point
-                        neighbour_edge.predecessor = current_point.incoming
+                    # Put points in right order and update predecessor
+                    neighbour_edge.point1 = current_point
+                    neighbour_edge.point2 = neighbour_point
+                    neighbour_edge.predecessor = current_point.incoming
