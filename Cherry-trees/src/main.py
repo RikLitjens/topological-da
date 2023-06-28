@@ -29,14 +29,12 @@ local_path="Cherry-trees/data/"
 bag_id = 0
 # Load the point cloud
 pcd = load_point_cloud(local_path, bag_id, "cloud_final")
-
 # Load the superpoints
-clusters, super_points = get_super_points(get_data(pcd), 0.1)
-del pcd
-gc.collect()
+r_super = .1
+clusters, super_points = get_super_points(get_data(pcd), r_super)
 
 # create the edges
-edges = get_edges(super_points, 0.1)
+edges = get_edges(super_points, r_super=r_super)
 # edge_histograms = edge_evaluation(edges, super_points, clusters, 0.1, bag_id)
 
 # Determine the edge confidences with persistent homology
@@ -46,6 +44,11 @@ edges = get_edges(super_points, 0.1)
 # 2. Get time it takes to become a single component
 
 # normalize the radia
+
+
+def get_cluster(cluster_id, clusters, points):
+    return points[np.where(clusters == cluster_id)]
+    
 
 def union_of_points(cluster1, cluster2):
     """Creates union of two numpy arrays, can be concatenation because there are no duplicate points.
@@ -91,6 +94,7 @@ def normalize_times(times):
     normalized_times = np.array([(time-min_time)/max_diff for time in times])
     return normalized_times
 
+pts = np.array(pcd.points)
 deaths = []
 print("Calculate convergence to singular compleces")
 print(len(edges), "edges to process")
@@ -101,6 +105,8 @@ for i, e in enumerate(edges):
     # print("process edge:", e)
     c1 = clusters[e[0]]
     c2 = clusters[e[1]]
+    c1 = get_cluster(c1, clusters, pts)
+    c2 = get_cluster(c2, clusters, pts)
     # print(len(c1), len(c2))
     cu = union_of_points(c1, c2)
     # Ripser verwacht een input als (N, M) waar N>M en N,M > 0
@@ -119,14 +125,14 @@ edge_confidences = normalize_times(deaths)
 plt.show()
 m = np.mean(deaths)
 edges = np.array(edges)
-reduced_e = super_points[edges[edge_confidences < m]]
+e = super_points[edges]
 
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-
-for l in reduced_e:
+ax = fig.add_subplot(projection='3d')
+ax.scatter3D(super_points[:,0], super_points[0:,1], super_points[:,2], c='green')
+for i, l in enumerate(e):
     p1,p2 = l
-    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], color='red')
+    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], color=(edge_confidences[i], edge_confidences[i], edge_confidences[i]))
 
 plt.show()
 
