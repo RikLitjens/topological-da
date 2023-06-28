@@ -3,6 +3,7 @@ from helpers import *
 from edge_preprocessing import *
 from deepnet.neuralnet import *
 from deepnet.net_main import *
+from persistent_homology import *
 import os
 from PIL import Image
 from popsearch.edge import Edge
@@ -35,68 +36,11 @@ clusters, super_points = get_super_points(get_data(pcd), r_super)
 
 # create the edges
 edges = get_edges(super_points, r_super=r_super)
-# edge_histograms = edge_evaluation(edges, super_points, clusters, 0.1, bag_id)
-
-# Determine the edge confidences with persistent homology
-
-# For each edge
-# 1. Get union of points in clusters
-# 2. Get time it takes to become a single component
-
-# normalize the radia
 
 
-def get_cluster(cluster_id, clusters, points):
-    return points[np.where(clusters == cluster_id)]
-    
-
-def union_of_points(cluster1, cluster2):
-    """Creates union of two numpy arrays, can be concatenation because there are no duplicate points.
-
-    args:
-        cluster1: np array
-        cluster2: np array
-
-    return:
-        np array : concatenation of two input arrays
-    
-    """
-    union = np.vstack((cluster1, cluster2))
-    x = int(union.shape[0] * 0.1)
-    sampled = union[random.choice(union.shape[0],x,replace=False),:]
-    return sampled
-
-def calc_ttsc(pc) -> float:
-    """
-    Calculate the time to singular component in the vitoris-rips complex
-    
-    Args:
-        point_cloud: 1D np array of all points used in the simplicial complex
-    """
-
-    H0 = ripser(pc)['dgms'][0]
-    mx = np.amax(H0[:-1], axis=0)[1]
-    return mx
-
-
-def normalize_times(times):
-    """Normalize the (persistence) times
-    
-    args:
-        times: array-like of the different persistence times
-
-    return:
-        np array; normalized persistence times
-    """
-    max_time = max(times)
-    min_time = min(times)
-    max_diff = max_time - min_time
-    normalized_times = np.array([(time-min_time)/max_diff for time in times])
-    return normalized_times
-
+print("Calculate convergence to singular compleces")
 pts = np.array(pcd.points)
 deaths = []
-print("Calculate convergence to singular compleces")
 print(len(edges), "edges to process")
 
 for i, e in enumerate(edges):
@@ -118,12 +62,8 @@ for i, e in enumerate(edges):
 print(np.mean(deaths))
 edge_confidences = normalize_times(deaths)
 
-# fig, axs = plt.subplots(1, 2, sharey=True, tight_layout=True)
-# axs[0].hist(deaths, bins=20)
-# axs[1].hist(edge_confidences, bins=20)
 
 plt.show()
-m = np.mean(deaths)
 edges = np.array(edges)
 e = super_points[edges]
 

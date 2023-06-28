@@ -78,12 +78,6 @@ def get_super_points(data, radius):
 
     return clusters, np.asarray(super_points)
 
-def load_super_points(path):
-    """Loads the super points from a file and returns them as a numpy array."""
-    pcd = load_pcd(path)
-    data = get_data(pcd)
-    return get_super_points(data, 0.1)
-
 if __name__ == "__main__":
 # Get the path to the data
     local_path = get_data_path()

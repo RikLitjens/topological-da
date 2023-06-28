@@ -40,3 +40,6 @@ def get_image(path):
     histogram = np.array(img.getdata())
     histogram = histogram.reshape((32, 16))
     return histogram
+
+def get_cluster(cluster_id, clusters, points):
+    return points[np.where(clusters == cluster_id)]
