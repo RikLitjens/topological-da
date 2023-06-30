@@ -1,261 +1,339 @@
-from enum import Enum
-from queue import PriorityQueue
-import numpy as np
+from typing import List
+from popsearch.skeleton_components import Point, LabelEnum, EdgeSkeleton
+from popsearch.dijkstra import Dijkstra
 
-class LabelEnum(Enum):
-    TRUNK = 0
-    SUPPORT = 1
-    LEADER = 2
-    SIDE = 3
+import numpy as np
+import copy
+
 
 class Skeleton:
-    def __init__(self, superpoints, raw_edges, tree_tips) -> None:
+    def __init__(self, superpoints, all_edges, base_node) -> None:
         # define suerpoints and raw edges (not added yet but could be)
-        self.superpoints = superpoints
-        self.raw_edges = raw_edges
 
-        # add dynamically
-        self.proper_edges = []
-        self.tree_tips = tree_tips
-        self.base_node = tree_tips[0] #TODO TODO TODO
+        self.p_to_points_map = {tuple(p): Point(tuple(p)) for p in superpoints}
+        self.superpoints: List[Point] = self.p_to_points_map.values()
 
-        # create a map from superpoint to index
-        self.superpoints_idx_map = {}
-        for index, item in enumerate(self.superpoints):
-            self.superpoints_idx_map[item] = index
+        # All edges that are found using the superpoint graph generation
+        # These will be filtered to find the skeleton
 
-        # create a map to track end points of edges
-        # and maps them to the edge itself
-        # for connectedness and 1 predecessor rule
-        # KEYS: endpoints of predecessor
-        #  used when adding an edge with p_start == p_end of predecessor
-        self.predecessor_map = {point: None for point in self.superpoints}
+        self.all_edges = [
+            EdgeSkeleton(edge, self.p_to_points_map[edge.p1], self.p_to_points_map[edge.p2])
+            for edge in all_edges
+        ]
 
-        # this can be a list
-        self.successor_map = {point: [] for point in self.superpoints}
+        # Base of the tree, from here it will grow up
+        self.base_node = self.p_to_points_map[base_node]
+        self.base_node.is_base = True
 
-        # map to get raw edges
-        self.raw_edge_map = {(edge.p_start, edge.p_end): edge for edge in self.raw_edges}
-        
+        # Open points are the points at the outer edge of the skeleton
+        # Here we ccan attach new edges to grow the skeleton
+        self.open_points = [self.base_node]
 
-    # map to check connectedness and 
-    def add_eligible_edge(self, edge):
-        self.proper_edges.append(edge)
-        self.predecessor_map[edge.p_end] = edge
-        self.successor_map[edge.p_start].append(edge)
+        # Closed points are all the superpoints for which a sucessor is included in the skeleton
+        self.closed_points = []
 
-        # add predecessor after adding
-        edge.pre = self.predecessor_map[edge.p_start]
+        # All the edges that are currently included in the skelly
+        self.included_edges = []
 
+        # Initialize point objects
+        self.initialize_points()
 
-    def remove_last_proper_edge(self):
+    def initialize_points(self):
         """
-        Throws out the last added edge
+        Create datastructures to speed up search later
         """
-        last_edge = self.proper_edges[-1]
-        # throw it out
-        self.proper_edges = self.proper_edges[:-1]
+        # Update neighbours
+        # count = 0
+        # old_edge = self.all_edges[0]
+        for edge in self.all_edges:
+            # print(50 * "-")
+            # print(edge)
+            # print(edge.point1)
+            # print(edge.point2)
+            # print(old_edge == edge)
+            # print(edge.point1 == edge.point2)
+            # print(len(edge.point1.neighbouring_edges))
+            # print(len(edge.point2.neighbouring_edges))
+            edge.point1.add_neighbouring_edge(edge)
+            edge.point2.add_neighbouring_edge(edge)
+            # print(edge.point1.neighbouring_edges)
+            # print(edge.point2.neighbouring_edges)
+            # print(len(edge.point1.neighbouring_edges))
+            # print(len(edge.point2.neighbouring_edges))
+            # print(50 * "-")
+            # old_edge = edge
+            # count += 1
 
-        # throw out of predecessor maps
-        self.predecessor_map[last_edge.p_end] = None
-        self.successor_map[last_edge.p_start] = self.successor_map[last_edge.p_start][:-1]
-        last_edge.pre = None
-
-    def get_skel_score(self):
-        """
-        Skel score is the optimization goal value
-        """
-        return sum([self.get_reward(edge, None) for edge in self.proper_edges])
-    
-    def get_potential(self, eligible_edge):
-        # get first two potential components
-        new_skel_score = self.get_skel_score()
-        dijk_edge_score = sum([ed.get_edge_score() for ed in eligible_edge.dijk[1]])
-
-        # last one requires more work
-        dijk_turn_penalties = []
-        for i, ed in enumerate(eligible_edge.dijk[1]):
-            next_edge = eligible_edge.dijk[1][i+1]
-            dijk_turn_penalties.append(ed.get_turn_penalty(next_edge, np.pi / 4, 0.5, 2))
-
-        # Sort the list in descending order
-        sorted_penalties = sorted(dijk_turn_penalties, reverse=True)
-
-        # Drop the highest values
-        n_dropped = 2 - eligible_edge.label
-        dropped_penalties = sorted_penalties[n_dropped:]
-
-        # calculate final potantial component
-        dijk_turn_penalty_score = sum(dropped_penalties)
-
-
-        return new_skel_score + dijk_edge_score - dijk_turn_penalty_score
-    
+            # if count == 10:
+            #     assert False
 
     def get_eligible(self, n_tip):
-        # initialize dijkstra
-        weights = [None for _ in range(len(self.superpoints)) for _ in range(len(self.superpoints))]
-        for edge in self.raw_edges:
-            start_index = self.superpoints_idx_map[edge.p_start]
-            end_index = self.superpoints_idx_map[edge.p_end]
-            # undirected
-            weights[start_index][end_index]  =  edge.get_dijkstra_weight()    
-            weights[end_index][start_index]  =  edge.get_dijkstra_weight()   
-        
+        """Determines which edges can be added (i.e. dont violate the rules)"""
 
-        eligible_edges = []
-        for raw_edge in self.raw_edges:
-            # elegibile is based on dijkstra
-            min_distance, dijk = self.dijkstra(weights, self.raw_edge_map, n_tip, raw_edge)
-            raw_edge.dijk = (n_tip, dijk) # save for possible later use
-            eligible = True
+        # Convert n_tip to its point counterpart
+        n_tip = self.p_to_points_map[n_tip]
 
-            # check for first property of path existence
-            if min_distance == float('inf'):
-                eligible = False
-            
+        # First we determine which edges from open points
+        # Are in our list
+        # Add all neighbour edges of open points
+        initial_candidates = []
+        for point in self.open_points:
+            for edge in point.neighbouring_edges:
+                # Do not add incoming
+                if edge == point.incoming_edge:
+                    continue
+
+                # Add edge
+                initial_candidates.append(edge)
+
+                # Swap point 1 and point 2 in such a way that
+                # Point 1 is the current open point (<point>)
+                if edge.point2 == point:
+                    edge.point1, edge.point2 = edge.point2, edge.point1
+                    edge.p1, edge.p2 = edge.p2, edge.p1
+                    continue
+
+                if edge.point1 != point:
+                    print(edge)
+                    print(point)
+                    raise Exception("These should be equal")
+
+        print(f"Len initial {len(initial_candidates)}")
+        # First filter out the basic violations
+        secondary_candidates = []
+        eligible = True
+        for edge in initial_candidates:
             # check for basic topology violations
-            if self.violate_basic_topology(raw_edge):
+            if self.violates_basic_topology(edge):
                 eligible = False
 
             # and label violation
-            if self.violate_label_topology(raw_edge):
+            if self.violates_label_topology(edge):
                 eligible = False
 
             # if elegible add to the list
-            if eligible: eligible_edges.append(raw_edge)
-            
+            if eligible:
+                secondary_candidates.append(edge)
+
+        print(f"Len secondary {len(secondary_candidates)}")
+
+        # Then use Dijkstra to fix the final constraint
+        # We cannot use the original points,
+        # This would destroy the skeleton structure
+        dijkstra_points = [Point(point.p) for point in self.superpoints]
+        dijkstra_p_to_points_map = {point.p: point for point in dijkstra_points}
+        dijkstra: Dijkstra = Dijkstra(
+            dijkstra_p_to_points_map.values(),
+            [
+                EdgeSkeleton(
+                    edge, dijkstra_p_to_points_map[edge.p1], dijkstra_p_to_points_map[edge.p2]
+                )
+                for edge in self.all_edges
+            ],
+            n_tip,
+        )
+
+        # The targets are the endpoints of the candidate edges
+        target_points = [edge.point2 for edge in secondary_candidates]
+
+        # Execute the dijkstra algorithm
+        dijkstra.dijkstra(target_points)
+
+        # Define final constraint
+        eligible_edges = []
+        for edge in secondary_candidates:
+            # Tip of the candidate edge is the target for our dijkstra
+            edge.dijk = (n_tip, dijkstra.find_path(edge.point2))  # save for possible later use
+
+            # Only eligible if there exists a path
+            if len(edge.dijk[1]) > 0:
+                eligible_edges.append(edge)
+
+        print(f"Len eligible {len(secondary_candidates)}")
         return eligible_edges
 
-    
-    def dijkstra(self, graph_weights, edge_map, start, candidate_edge):
-        start_idx = self.superpoints_idx_map[start]
-        v = len(self.superpoints)
-        visited = []
-        D = {v:float('inf') for v in range(v)}
-        predecessors = {v: None for v in range(v)}  # Track predecessors
-        D[start] = 0
-        
+    def violates_basic_topology(self, candidate_edge: EdgeSkeleton):
+        # The first principle of having a connected out-tree
+        # Is handled by the open-point and neighbour edges mechanism
 
-        q = PriorityQueue()
-        q.put((0, start))
-
-        while not q.empty():
-            (dist, current_point_idx) = q.get()
-            visited.append(current_point_idx)
-
-            for neighbor_idx in range(v):
-                if graph_weights[current_point_idx][neighbor_idx] is not None:
-                    distance = graph_weights[current_point_idx][neighbor_idx]
-                    if neighbor_idx not in visited:
-                        old_cost = D[neighbor_idx]
-                        new_cost = D[current_point_idx] + distance
-                        if new_cost < old_cost:
-                            q.put((new_cost, neighbor_idx))
-                            D[neighbor_idx] = new_cost
-                            predecessors[neighbor_idx] = current_point_idx
-
-        # shortest path to edge endpoint 1
-        if D[self.superpoints_idx_map[candidate_edge.p_start]] > D[self.superpoints_idx_map[candidate_edge.p_end]]:
-            # loop through predecessors to find all edges
-            current_pre = candidate_edge.p_end
-            min_dist = D[self.superpoints_idx_map[candidate_edge.p_end]]
-        
-        # shortest path to edge endpoint 2
-        else:
-            current_pre = candidate_edge.p_start
-            min_dist =  D[self.superpoints_idx_map[candidate_edge.p_start]]
-
-        # get predecessors (Dijk in paper
-        dijk = []
-        
-        while predecessors[current_pre] is not None:
-            # add edge that belongs to it
-            predecessor_edge = self.raw_edge_map[(current_pre, predecessors[current_pre])]
-            dijk.append(predecessor_edge)
-            current_pre = predecessors[current_pre]
-
-        return min_dist, dijk
-
-        
-    def violates_basic_topology(self, candidate_edge):
-
-        # if the endpoint of the edge is already the endpoint of another edge, 
-        # this is wrong and should be deleted
-        # by the principle of acylic outward graph
-        if self.predecessor_map[candidate_edge.p_end] > 0:
+        # The second requirement is that it is acyclic
+        if candidate_edge.point2 in self.open_points or candidate_edge.point2 in self.closed_points:
             return True
-        
-        # the starting point of the edge has to coincide
-        # with the end point of another
-        # otherwise the graph is not connected
-        if self.predecessor_map[candidate_edge.p_start] == 0 and not candidate_edge.p_start == self.base_node:
-            return True
-        
+
         return False
-    
-    def violate_label_topology(self, candidate_edge):
-        predecessor =  self.predecessor_map[candidate_edge.p_start]
-        successors = self.successor_map[candidate_edge.p_start]
+
+    def violates_label_topology(self, candidate_edge: EdgeSkeleton):
+        virtual_predecessor = (
+            candidate_edge.point1.incoming_edge
+        )  # Virtual because it is only a candidate, not an actual edge
+        virtual_successors = candidate_edge.point1.outgoing_edges + [candidate_edge]
 
         # label progression
-        if candidate_edge.label < predecessor.label:
+        if not candidate_edge.point1.is_base and candidate_edge.label < virtual_predecessor.label:
             return True
 
-
         # label linearity
-        successors_candidate = successors + [candidate_edge]
-        if len(successors_candidate) > 1:
+        if len(virtual_successors) > 1:
+            # Initially we assume all have equal label
             all_equal = True
-            prev = successors_candidate[0]
-            for succ in successors_candidate[1:]:
-                 if succ.label != prev.label:
-                     all_equal = False
+            sample = virtual_successors[0]  # Take one random successor
+            for successor in virtual_successors[1:]:
+                if successor.label != sample.label:
+                    # If one label is different, all_equal is false
+                    all_equal = False
 
-            if all_equal: return True
+            # In case all labels are equal, label linearity is violated
+            if all_equal:
+                return True
 
         # Trunk_support split, check if relevant
-        if len(successors) > 0 and predecessor.label == LabelEnum.TRUNK:
+        if (
+            len(virtual_successors) > 0
+            and not candidate_edge.point1.is_base
+            and virtual_predecessor.label == LabelEnum.TRUNK
+        ):
             # check if successors are all trunks
             # check if none of them are trunks
             # count the support succs
             all_trunk = True
             no_trunk = True
             support_count = 0
-            for succ in successors:
-                if succ.label != LabelEnum.TRUNK:
+
+            # Check the successors
+            for successor in virtual_successors:
+                # If one of the labels is not a trunk, all_trunk is false
+                if successor.label != LabelEnum.TRUNK:
                     all_trunk = False
+
+                # If one of the labels is a trunk, no_trunk is false
                 else:
                     no_trunk = False
 
-                if succ.label == LabelEnum.SUPPORT:
+                # Count the supports
+                if successor.label == LabelEnum.SUPPORT:
                     support_count += 1
 
+            # Either all successors are trunks, or none
             if not all_trunk and not no_trunk:
                 return True
-            
+
+            # If the amount of supports is higher than 2, we violate too
             if support_count > 2:
                 return True
-                
+
         # otherwise
         return False
 
+    def include_eligible_edge(self, edge: EdgeSkeleton):
+        """
+        Adds an edge to the final skeleton
+        """
 
-    def __eq__(self, other: object) -> bool:
-        return self.edges == other.edges
-    
+        # Include the edge
+        self.included_edges.append(edge)
+
+        # Update open and closed lists
+        print(50 * "-")
+        print(id(self))
+        print(self.open_points, id(self.open_points))
+        print(edge.point1)
+        print(edge.point2)
+        print(50 * "-")
+
+        self.open_points.remove(edge.point1)
+        self.closed_points.append(edge.point1)
+
+        self.open_points.append(edge.point2)
+
+        # Update point info
+        edge.point1.add_outgoing_edge(edge)
+        edge.point2.set_incoming_edge(edge)
+
+        if edge.point1.incoming_edge is None:
+            raise Exception(f"{edge}, point 1 {edge.p1} has no incoming: Impossible")
+
+        # Update edge info
+        edge.predecessor = edge.point1.incoming_edge
+        edge.point1.incoming_edge.successors.append(edge)
+
+    def exclude_last_included_edge(self):
+        """
+        Throws out the last added edge
+        """
+
+        # Exclude the edge
+        last_included_edge: EdgeSkeleton = self.included_edges[-1]
+
+        # Exclude edge
+        self.included_edges = self.included_edges[:-1]
+
+        # Updated open and closed lists
+        self.open_points = self.open_points[:-1]  # Removes the endpoint of last_included_edge
+        self.closed_points = self.closed_points[
+            :-1
+        ]  # Removes the start point of last_included_edge
+        self.open_points.append(last_included_edge.point1)  # Reopen the start point
+
+        # Update point info
+        last_included_edge.point1.remove_last_outgoing_edge()
+        last_included_edge.point2.set_incoming_edge(None)
+
+        # Update edge info
+        last_included_edge.predecessor = None
+        last_included_edge.point1.incoming_edge.successors = (
+            last_included_edge.point1.incoming_edge.successors[:-1]
+        )
+
+    def get_potential(self, eligible_edge):
+        """
+        Calculate the edge potential as in the paper
+        """
+
+        # get first two potential components
+        new_skel_score = self.get_skel_score()
+        dijk_edge_score = sum([ed.get_edge_score(0.4) for ed in eligible_edge.dijk[1]])
+
+        # last one requires more work
+        dijk_turn_penalties = [0]  # Initial turn penalty is 0 (Start of Path has no predecessor)
+        for i, ed in enumerate(eligible_edge.dijk[1]):
+            # Ensure index
+            if i == (len(eligible_edge.dijk[1]) - 1):
+                break
+
+            # Get turn penalty
+            next_edge = eligible_edge.dijk[1][i + 1]
+            dijk_turn_penalties.append(
+                next_edge.get_turn_penalty(np.pi / 4, 0.5, 2, predecessor=ed)
+            )
+
+        # Sort the list in descending order
+        sorted_penalties = sorted(dijk_turn_penalties, reverse=True)
+
+        # Drop the highest values
+        n_dropped = 2 - eligible_edge.label.value
+        dropped_penalties = sorted_penalties[n_dropped:]
+
+        # calculate final potantial component
+        dijk_turn_penalty_score = sum(dropped_penalties)
+
+        return new_skel_score + dijk_edge_score - dijk_turn_penalty_score
+
+    def get_skel_score(self):
+        """
+        Skel score is the optimization goal value
+        """
+        return sum(
+            [
+                self.get_reward(
+                    edge,
+                    self.base_node,
+                )
+                for edge in self.included_edges
+            ]
+        )
+
+    def __eq__(self, other) -> bool:
+        return self.included_edges == other.included_edges
+
     def __hash__(self):
-        return hash(tuple(self.edges))
-                
-
-
-
-
-
-    
-
-        
-
-
-        
-
+        return hash(tuple(self.included_edges))

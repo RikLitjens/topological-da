@@ -6,9 +6,12 @@ from deepnet.neuralnet import *
 from deepnet.net_main import *
 import os
 from PIL import Image
-from popsearch.edge import Edge
+from popsearch.skeleton_components import Edge
+from popsearch.popsearch import PopSearch
 from popsearch.skeleton import LabelEnum
 from popsearch.mst import *
+from preprocess import clean_up, rotate_z_up
+import pickle
 
 # test_mst()
 
@@ -63,7 +66,11 @@ pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 #     for label in LabelEnum:
 #         rich_edges.append(Edge(p_start, p_end, conf, label))
 
-    
+# bag_id = 0
+# # Load the point cloud
+# pcd = load_point_cloud(local_path, bag_id, "cloud_final")
+# pcd = rotate_z_up(pcd)
+# pcd = clean_up(pcd)
 
 # # get tips
 # g = Graph(super_points, rich_edges)
