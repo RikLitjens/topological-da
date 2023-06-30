@@ -1,7 +1,9 @@
-from helpers import numpy_to_pcd, visualize_point_cloud
+from helpers import choose_f, dist, get_data_path, load_point_cloud, numpy_to_pcd, visualize_point_cloud
 from reebgraph.knn import KD, RT
 from reebgraph.reeb_graph import PointVal, ReebNode
 from sklearn.cluster import DBSCAN
+import open3d as o3d
+import numpy as np
 
 def compute_reeb(pcd, strip_size, tau):
     f = choose_f()
@@ -75,12 +77,16 @@ def connected_components(strip, tau):
     components = DBSCAN(eps=tau, algorithm='ball_tree').fit(points).labels_
     print(components)
     j = 0
-    final_components = [[]]
+    all_components = [[]]
     for i in range(len(points)):
         if components[i] > j:
-            final_components.append([])
+            all_components.append([])
             j = j + 1
-        final_components[j].append((points[i][0], points[i][1], points[i][2]))
+        all_components[j].append((points[i][0], points[i][1], points[i][2]))
+    final_components = []
+    for component in all_components:
+        if len(component) > 5:
+            final_components.append(component)
     
     print(f"I got here! I found {len(final_components)} components.")
     return final_components, compute_centroids(final_components)
@@ -103,12 +109,10 @@ def compute_centroids(components):
         centroids.append((x, y, z))
     return centroids
 
-def tau_connected(pcd1, pcd2, tau):
-    pos_tree = KD(pcd2)
-    
+def tau_connected(pcd1, kd2, tau):
     for point in pcd1:
-        dist, throwaway = pos_tree.get_neighbors(point, tau)
-        if len(throwaway) > 0:
+        dist = kd2.closest_neighbor(point)
+        if dist <= tau:
             return True
     return False
 
@@ -125,6 +129,24 @@ def find_reeb_nodes(strips, ranges, tau):
             temp_nodes.append(ReebNode(centroids[j], components[j], ranges[i]))
         reeb_nodes.append(temp_nodes)
     
+    reeb_points = []
+    for subnode in reeb_nodes:
+        for node in subnode:
+            reeb_point = [node.get_point()[0], node.get_point()[1], node.get_point()[2]]
+            reeb_points.append(reeb_point)
+
+            ps_fake = node.get_pointcloud()
+            ps = []
+            for (x, y, z) in ps_fake:
+                ps.append([x, y, z])
+            ps = np.asarray(ps)
+            ps = numpy_to_pcd(ps)
+            ps.paint_uniform_color([1, 0, 0])
+            reeb_point = np.asarray([reeb_point])
+            reeb_node = numpy_to_pcd(reeb_point)
+            reeb_node.paint_uniform_color([0, 1, 0])
+            visualize_point_cloud([ps, reeb_node])
+    
     get_edges(reeb_nodes, tau)
     return reeb_nodes
 
@@ -132,11 +154,20 @@ def get_edges(reeb_nodes, tau):
     for i in range(len(reeb_nodes) - 1):
         print(f"This is arc-computation iteration {i}")
         j = i + 1
-        for node1 in reeb_nodes[i]:
-            for node2 in reeb_nodes[j]:
-                if tau_connected(node1.get_pointcloud(), node2.get_pointcloud(), tau):
-                    node1.add_edge(node2)
-                    node2.add_edge(node1)
+
+        kd_j = []
+        for node in reeb_nodes[j]:
+            kd_j.append(KD(node.get_pointcloud()))
+
+        for node in reeb_nodes[i]:
+            for k in range(len(kd_j)):
+                kd = kd_j[k]
+                print(f"In this iteration, node1 has {len(node.get_pointcloud())} points")
+                node_dist = dist(node.get_point(), reeb_nodes[j][k].get_point())
+                if node_dist <= tau + node.get_convex_size() + reeb_nodes[j][k].get_convex_size():
+                    if tau_connected(node.get_pointcloud(), kd, tau):
+                        node.add_edge(reeb_nodes[j][k])
+                        reeb_nodes[j][k].add_edge(node)
 
     # for strip in reeb_nodes:
     #     print("Another strip visited")
@@ -148,8 +179,3 @@ def get_edges(reeb_nodes, tau):
     #                 if tau_connected(node1.get_pointcloud(), node2.get_pointcloud(), tau):
     #                     strip[i].add_edge(strip[j])
     #                     strip[j].add_edge(strip[i])
-
-def choose_f():
-    def f(x, y, z):
-        return z
-    return f

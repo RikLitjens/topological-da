@@ -33,6 +33,10 @@ class KD:
                 result_points.append(self.points[i])
             return dist, result_points
         return None, []
+    
+    def closest_neighbor(self, tuple_point):
+        dist, ind = self.tree.query([[tuple_point[0], tuple_point[1], tuple_point[2]]], k=1, return_distance=True)
+        return dist
 
 class RT:
     def __init__(self, strip):

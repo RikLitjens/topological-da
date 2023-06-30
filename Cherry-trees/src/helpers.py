@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import open3d as o3d
 import math
 import numpy as np
@@ -16,11 +17,28 @@ def load_point_cloud(local_path, bag_id, pointcloud_name):
 
 
 def visualize_point_cloud(pcd):
-    o3d.visualization.draw_geometries([pcd], 
-                                      zoom=0.3412, 
-                                      front=[0.4257, -0.2125, -0.8795], 
-                                      lookat=[0, 0, 0], 
-                                      up=[0.4694, -0.9768, 0.2024])
+    # o3d.visualization.draw_geometries(pcd, 
+    #                                   zoom=0.3412, 
+    #                                   front=[0.4257, -0.2125, -0.8795], 
+    #                                   lookat=[0, 0, 0], 
+    #                                   up=[0.4694, -0.9768, 0.2024]
+    
+    viewer = o3d.visualization.Visualizer()
+    viewer.create_window()
+    for geometry in pcd:
+        viewer.add_geometry(geometry)
+    opt = viewer.get_render_option()
+    opt.show_coordinate_frame = True
+    opt.background_color = np.asarray([0.3, 0.3, 0.3])
+    viewer.run()
+    viewer.destroy_window()
+
+def visualize_point_cloud_scatter(pcd):
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+
+    ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], c='r', marker='o')
+    plt.show()
 
 def get_data(pcd):
     """Gets the data from a point cloud and returns it as a numpy array."""
@@ -40,3 +58,8 @@ def get_image(path):
     histogram = np.array(img.getdata())
     histogram = histogram.reshape((32, 16))
     return histogram
+
+def choose_f():
+    def f(x, y, z):
+        return z
+    return f
