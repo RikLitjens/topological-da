@@ -38,6 +38,27 @@ class Point:
     def remove_last_outgoing_edge(self):
         self.outgoing_edges = self.outgoing_edges[:-1]
 
+    def update_edge_references(self, p_edge_map):
+        # Update the references for all edges in the point
+
+        # Incoming edge
+        if self.incoming_edge is not None:
+            self.incoming_edge = p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)]
+
+        # Outgoing edges
+        new_outgoing_edges = []
+        for outgoing in self.outgoing_edges:
+            new_outgoing_edges.append(p_edge_map[(outgoing.p1, outgoing.p2)])
+
+        self.outgoing_edges = new_outgoing_edges
+
+        # Neighbour edges
+        new_neighbours = []
+        for neighbour in self.neighbouring_edges:
+            new_neighbours.append(p_edge_map[(neighbour.p1, neighbour.p2)])
+
+        self.neighbouring_edges = new_neighbours
+
     def __eq__(self, other):
         if isinstance(other, Point):
             return self.p == other.p
@@ -154,7 +175,7 @@ class EdgeSkeleton(Edge):
         """
         edge_score = self.get_edge_score(0.4)
         turn_penalty = (
-            self.get_turn_penalty(self.predecessor, np.pi / 4, 0.5, 2)
+            self.get_turn_penalty(np.pi / 4, 0.5, 2, self.predecessor)
             if self.p1 != base_node
             else 0
         )
@@ -173,6 +194,8 @@ class EdgeSkeleton(Edge):
         if predecessor is None:
             predecessor = self.predecessor
 
+        if type(predecessor) is int:
+            print(predecessor)
         if self.label is not None and self.label != predecessor.label:
             return 0
 
@@ -185,25 +208,26 @@ class EdgeSkeleton(Edge):
         """ "
         Returns a penalty when the label and grow direction do not match
         """
-        if self.label in [LabelEnum.LEADER, LabelEnum.SUPPORT]:
+        if self.label not in [LabelEnum.LEADER, LabelEnum.SUPPORT]:
             return 0
+
         if self.get_delta_target() <= theta:
             return 0
 
         return c_grow * (self.get_delta_target() - theta) ** p_grow
 
-    def get_delta_target(self, edge):
+    def get_delta_target(self):
         """
         Helper function that returns the angle
         of an edge to its label
         i.e. support has to be horizontal
         and leader vertical
         """
-        grow_angle = edge.angle_with_x()
-        if edge.label == LabelEnum.SUPPORT:
+        grow_angle = self.calculate_grow_angle()
+        if self.label == LabelEnum.SUPPORT:
             return grow_angle
 
-        if edge.label == LabelEnum.LEADER:
+        if self.label == LabelEnum.LEADER:
             return np.pi / 2 - grow_angle
 
     def get_dijkstra_weight(self, start_point):
@@ -218,3 +242,16 @@ class EdgeSkeleton(Edge):
         )
         self.label = label
         return score
+
+    def update_pred_reference(self, p_edge_map):
+        # Update the reference to the predecessor
+        if self.predecessor is not None:
+            self.predecessor = p_edge_map[(self.predecessor.p1, self.predecessor.p2)]
+
+    def update_succ_references(self, p_edge_map):
+        # Update the reference to the successors
+        new_successors = []
+        for succ in self.successors:
+            new_successors.append(p_edge_map[(succ.p1, succ.p2)])
+
+        self.successors = new_successors

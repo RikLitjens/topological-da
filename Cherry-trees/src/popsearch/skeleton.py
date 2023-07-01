@@ -1,5 +1,5 @@
 from typing import List
-from popsearch.skeleton_components import Point, LabelEnum, EdgeSkeleton
+from popsearch.skeleton_components import Edge, Point, LabelEnum, EdgeSkeleton
 from popsearch.dijkstra import Dijkstra
 
 import numpy as np
@@ -22,8 +22,11 @@ class Skeleton:
         ]
 
         # Base of the tree, from here it will grow up
-        self.base_node = self.p_to_points_map[base_node]
-        self.base_node.is_base = True
+        if base_node in self.p_to_points_map:
+            self.base_node = self.p_to_points_map[base_node]
+            self.base_node.is_base = True
+        else:
+            self.base_node = None
 
         # Open points are the points at the outer edge of the skeleton
         # Here we ccan attach new edges to grow the skeleton
@@ -43,29 +46,9 @@ class Skeleton:
         Create datastructures to speed up search later
         """
         # Update neighbours
-        # count = 0
-        # old_edge = self.all_edges[0]
         for edge in self.all_edges:
-            # print(50 * "-")
-            # print(edge)
-            # print(edge.point1)
-            # print(edge.point2)
-            # print(old_edge == edge)
-            # print(edge.point1 == edge.point2)
-            # print(len(edge.point1.neighbouring_edges))
-            # print(len(edge.point2.neighbouring_edges))
             edge.point1.add_neighbouring_edge(edge)
             edge.point2.add_neighbouring_edge(edge)
-            # print(edge.point1.neighbouring_edges)
-            # print(edge.point2.neighbouring_edges)
-            # print(len(edge.point1.neighbouring_edges))
-            # print(len(edge.point2.neighbouring_edges))
-            # print(50 * "-")
-            # old_edge = edge
-            # count += 1
-
-            # if count == 10:
-            #     assert False
 
     def get_eligible(self, n_tip):
         """Determines which edges can be added (i.e. dont violate the rules)"""
@@ -169,7 +152,10 @@ class Skeleton:
         virtual_successors = candidate_edge.point1.outgoing_edges + [candidate_edge]
 
         # label progression
-        if not candidate_edge.point1.is_base and candidate_edge.label < virtual_predecessor.label:
+        if (
+            not candidate_edge.point1.is_base
+            and candidate_edge.label.value < virtual_predecessor.label.value
+        ):
             return True
 
         # label linearity
@@ -324,16 +310,72 @@ class Skeleton:
         """
         return sum(
             [
-                self.get_reward(
-                    edge,
+                edge.get_reward(
                     self.base_node,
                 )
                 for edge in self.included_edges
             ]
         )
 
+    def create_copy(self):
+        """
+        Creates a full copy of the skeleton in three steps
+        1) Create point copies
+        2) Create edge copies
+        3) Update references within objects
+        """
+        new_skel = Skeleton([], [], None)
+
+        new_skel.p_to_points_map = {}
+        for p, point in self.p_to_points_map.items():
+            new_point = Point(p)
+            new_point.incoming_edge = point.incoming_edge  # Has to be updated later
+            new_point.outgoing_edges = point.outgoing_edges  # Has to be updated later
+            new_point.neighbouring_edges = point.neighbouring_edges  # Has to be updated later
+            # Base point has to be updated later
+            new_skel.p_to_points_map[p] = new_point
+
+        # Update superpoints list
+        new_skel.superpoints: List[Point] = new_skel.p_to_points_map.values()
+
+        p_edge_map = {}
+        for edge in self.all_edges:
+            new_edge = EdgeSkeleton(
+                Edge(edge.p1, edge.p2, edge.conf, edge.label),
+                new_skel.p_to_points_map[edge.p1],
+                new_skel.p_to_points_map[edge.p2],
+            )
+            p_edge_map[(edge.p1, edge.p2)] = new_edge
+            # predecessors and successors have to be updated later
+
+        new_skel.all_edges = p_edge_map.values()
+
+        # Base of the tree, from here it will grow up
+        new_skel.base_node = self.p_to_points_map[self.base_node.p]
+        new_skel.base_node.is_base = True
+
+        # Update edge references in point
+        for point in new_skel.superpoints:
+            point.update_edge_references(p_edge_map)
+
+        # Update pre- and succesors
+        for edge in new_skel.all_edges:
+            edge.update_pred_reference(p_edge_map)
+            edge.update_succ_references(p_edge_map)
+
+        # Update open points
+        new_skel.open_points = [new_skel.p_to_points_map[point.p] for point in self.open_points]
+
+        # Update closed points
+        new_skel.closed_points = [new_skel.p_to_points_map[point.p] for point in self.open_points]
+
+        # Update included edges
+        new_skel.included_edges = [p_edge_map[(edge.p1, edge.p2)] for edge in self.included_edges]
+
+        return new_skel
+
     def __eq__(self, other) -> bool:
         return self.included_edges == other.included_edges
 
     def __hash__(self):
-        return hash(tuple(self.included_edges))
+        return hash(id(self))

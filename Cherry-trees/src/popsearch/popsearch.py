@@ -3,6 +3,7 @@ import random
 from collections import Counter
 from popsearch.skeleton import Skeleton
 from popsearch.skeleton_components import Edge
+import copy
 
 
 class PopSearch:
@@ -75,8 +76,9 @@ class PopSearch:
         self.skeletons_k = []
         for candidate_pair in chosen:
             print("Updating this generation")
-            candidate_pair[0].include_eligible_edge(candidate_pair[1])
-            self.skeletons_k.append(candidate_pair[0])
+            new_skel = candidate_pair[0].create_copy()
+            new_skel.include_eligible_edge(candidate_pair[1])
+            self.skeletons_k.append(new_skel)
 
     def get_weights(self):
         """
@@ -86,6 +88,7 @@ class PopSearch:
         ranks_skeleton = create_rank_dict(lambda skel: skel.get_skel_score(), self.skeletons_k)
 
         # define rank_skelly
+        print(ranks_skeleton)
         for skel in self.skeletons_k:
             rank_skeleton = ranks_skeleton[skel]
             n_tip = random.choice(self.tree_tips)
