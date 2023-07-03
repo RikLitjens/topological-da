@@ -14,6 +14,8 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
 
     Args:
         pcd: open3d point cloud
+        prepped_model: boolean, whether or not there already exists a model
+        bag_id: int, the bag id of the point cloud
     """
 
     # Calculate the superpoints and corresponding clusters
