@@ -95,7 +95,7 @@ def calc_edge_confidences(pcd, clusters, edges):
         # print("processed in:", time.time()-t_start, "seconds")
 
     print(np.mean(deaths))
-    edge_confidences = normalize_times(deaths)
+    edge_confidences = 1 - normalize_times(deaths)
 
     return edge_confidences
 
