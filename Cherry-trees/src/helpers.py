@@ -7,12 +7,12 @@ from PIL import Image
 
 def get_data_path():
     config = configparser.RawConfigParser()
-    config.read(r"Cherry-trees\config\config.ini")
+    config.read(r"Cherry-trees/config/config.ini")
     return config.get("DATA", "PATH")
 
 
 def load_point_cloud(local_path, bag_id, pointcloud_name):
-    pcd = o3d.io.read_point_cloud(rf"{local_path}\bag_{bag_id}\{pointcloud_name}.pcd")
+    pcd = o3d.io.read_point_cloud(rf"{local_path}/bag_{bag_id}/{pointcloud_name}.pcd")
     return pcd
 
 

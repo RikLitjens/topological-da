@@ -94,6 +94,37 @@ import pickle
 #         edge_objects.append(Edge(p_start, p_end, conf, label))
 
 
+#######################
+# Persistent homology #
+#######################
+
+local_path = get_data_path()
+bag_id = 0
+
+# Load the point cloud
+pcd = load_point_cloud(local_path, bag_id, "cloud_final")
+pcd = rotate_z_up(pcd)
+pcd = clean_up(pcd)
+
+# Calculate the superpoints and corresponding clusters
+clusters, super_points = get_super_points(get_data(pcd), 0.1)
+
+# Calculate the MST
+edges = get_edges(super_points, 0.1)
+
+# Calculate the edge confidences
+edge_conf =  calc_edge_confidences(pcd, clusters, edges)
+
+# Build edge list
+egde_list = build_edge_list(edge_conf, edges, super_points)
+
+# Other stuff
+
+
+
+
+
+
 # # get tips
 # g = Graph(super_points, edge_objects)
 # print(f"There are {len(g.find_connected_components(True))} components")
