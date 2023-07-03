@@ -41,6 +41,17 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
     # convert to edge class
     edge_list = build_edge_list(edge_confidences, edges, super_points)
 
+
+    # Create the graph
+    G = Graph(super_points, edge_list)
+    
+    # Calculate the connected components
+    cc = G.find_connected_components(True)
+
+    # Determine lowest point of largest connected component
+    lengths = [len(c) for c in cc]
+    lowest = min(cc[np.argmax(lengths)], key=itemgetter(2))
+
     # TODO: Create the tree based on constraints
 
     pass
@@ -64,7 +75,6 @@ def strat_persistent_homology(pcd):
     # Convert to edge class
     edge_list = build_edge_list(edge_conf, edges, super_points)
 
-    
     # Create the graph
     G = Graph(super_points, edge_list)
     
