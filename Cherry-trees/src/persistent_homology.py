@@ -1,9 +1,6 @@
 import numpy as np
-from numpy import random
 from ripser import ripser
 from helpers import *
-import matplotlib.pyplot as plt
-import time
 from popsearch.skeleton_components import Edge, LabelEnum
 
 def calc_ttsc(pc) -> float:
@@ -35,27 +32,15 @@ def normalize_times(times):
     return normalized_times
 
 def build_edge_list(edge_confidences, edges, super_points):
-        edge_objects = []
-        for i, primitive_edge in enumerate(edges):
-            p_start = super_points[primitive_edge[0]]
-            p_end = super_points[primitive_edge[1]]
-            conf = edge_confidences[i]
-            for label in LabelEnum:
-                edge_objects.append(Edge(p_start, p_end, conf, label))
-        return edge_objects
-
-    # plt.show()
-    # edges = np.array(edges)
-    # e = super_points[edges]
-
-    # fig = plt.figure()
-    # ax = fig.add_subplot(projection='3d')
-    # ax.scatter3D(super_points[:,0], super_points[0:,1], super_points[:,2], c='green')
-    # for i, l in enumerate(e):
-    #     p1,p2 = l
-    #     ax.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]], color=(edge_confidences[i], edge_confidences[i], edge_confidences[i]))
-
-    # plt.show()
+    """Build the edge list from the edge confidences and the edges"""
+    edge_objects = []
+    for i, primitive_edge in enumerate(edges):
+        p_start = super_points[primitive_edge[0]]
+        p_end = super_points[primitive_edge[1]]
+        conf = edge_confidences[i]
+        for label in LabelEnum:
+            edge_objects.append(Edge(p_start, p_end, conf, label))
+    return edge_objects
 
 def calc_edge_confidences(pcd, clusters, edges):
     print("Calculate convergence to singular compleces")
@@ -65,21 +50,20 @@ def calc_edge_confidences(pcd, clusters, edges):
 
     for i, e in enumerate(edges):
         print(f"edge: {i+1}/{len(edges)}")
-        t_start = time.time()
-        # print("process edge:", e)
+
+        # Calculate the cluster of the two points
         c1 = clusters[e[0]]
         c2 = clusters[e[1]]
         c1 = get_cluster(c1, clusters, pts)
         c2 = get_cluster(c2, clusters, pts)
-        # print(len(c1), len(c2))
-        cu = union_of_points(c1, c2)
-        # Ripser verwacht een input als (N, M) waar N>M en N,M > 0
-        mx = calc_ttsc(cu)
-        # print("ttsc:", mx)
-        deaths.append(mx)
-        # print("processed in:", time.time()-t_start, "seconds")
 
-    print(np.mean(deaths))
+        cu = union_of_points(c1, c2)
+
+        # Calculate the time to singular component
+        mx = calc_ttsc(cu)
+
+        deaths.append(mx)
+
     edge_confidences = 1 - normalize_times(deaths)
 
     return edge_confidences

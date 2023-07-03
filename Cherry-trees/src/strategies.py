@@ -37,6 +37,7 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
     model_path = os.path.join(os.getcwd(), "Cherry-trees/src/deepnet/model.tree")
     model.load_state_dict(torch.load(model_path))
 
+    # Calculate the edge confidences
     X = torch.tensor(edge_histograms).reshape(-1, 1, 32, 16).float()
     edge_confidences = model(X)
 
