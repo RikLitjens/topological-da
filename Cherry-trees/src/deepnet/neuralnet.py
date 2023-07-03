@@ -35,8 +35,8 @@ class NET(nn.Module):
             nn.Linear(64, 6)
         )
 
-        # I'd do this differently though..
-        self.final_fc = nn.Linear(6, 1)       # Final fully connected layer leading to <is_valid> (2d) and <category> (5d) one-hot encoded vector
+        # Final fully connected layer leading to <is_valid> (2d) and <category> (5d) one-hot encoded vector
+        self.final_fc = nn.Linear(6, 1)       
 
     # def forward(self, position_elevation: torch.Tensor, image: torch.Tensor) -> torch.Tensor:
     def forward(self, image: torch.Tensor) -> torch.Tensor:

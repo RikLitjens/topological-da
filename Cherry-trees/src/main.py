@@ -15,8 +15,6 @@ import pickle
 from strategies import *
 
 
-
-
 # Strategy to use
 # strat = "CNN"
 strat = "homology"
@@ -54,9 +52,6 @@ if strat == "homology":
 
 if strat == "reeb":
     strat_reeb_graph(pcd)
-
-
-
 
 
 # # get tips
