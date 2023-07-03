@@ -5,21 +5,6 @@ from helpers import *
 import matplotlib.pyplot as plt
 import time
 from popsearch.skeleton_components import Edge, LabelEnum
-def union_of_points(cluster1, cluster2):
-    """Creates union of two numpy arrays, can be concatenation because there are no duplicate points.
-
-    args:
-        cluster1: np array
-        cluster2: np array
-
-    return:
-        np array : concatenation of two input arrays
-    
-    """
-    union = np.vstack((cluster1, cluster2))
-    x = int(union.shape[0] * 0.25)
-    sampled = union[random.choice(union.shape[0],x,replace=False),:]
-    return sampled
 
 def calc_ttsc(pc) -> float:
     """

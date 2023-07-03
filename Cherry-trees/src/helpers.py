@@ -3,7 +3,7 @@ import math
 import numpy as np
 import configparser
 from PIL import Image
-
+from random import random
 
 def get_data_path():
     config = configparser.RawConfigParser()
@@ -47,6 +47,22 @@ def get_image(path):
     histogram = np.array(img.getdata())
     histogram = histogram.reshape((32, 16))
     return histogram
+
+def union_of_points(cluster1, cluster2):
+    """Creates union of two numpy arrays, can be concatenation because there are no duplicate points.
+
+    args:
+        cluster1: np array
+        cluster2: np array
+
+    return:
+        np array : concatenation of two input arrays
+    
+    """
+    union = np.vstack((cluster1, cluster2))
+    x = int(union.shape[0] * 0.25)
+    sampled = union[random.choice(union.shape[0],x,replace=False),:]
+    return sampled
 
 def get_cluster(cluster_id, clusters, points):
     return points[np.where(clusters == cluster_id)]

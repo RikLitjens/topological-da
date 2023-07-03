@@ -23,7 +23,7 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
     edges = get_edges(super_points, 0.1)
 
     # Calculate the edge histograms
-    edge_histograms = edge_evaluation(edges, super_points, clusters, 0.1, bag_id)
+    edge_histograms = edge_evaluation(edges, super_points, clusters, 0.1, bag_id, pcd)
 
 
     # Create the CNN model if none is provided
