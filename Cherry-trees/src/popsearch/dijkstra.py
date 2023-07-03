@@ -8,21 +8,14 @@ class Dijkstra:
         self.edges = edges
         self.start_point = start_point
 
-        # Target points in the skeleton are not the same as the
-        # Points in the dijkstra environment
-        self.target_point_map = {}
+        self.p_point_map = {}
 
         # Initalize neighbours within the dijkstra environment
         for edge in self.edges:
             edge.point1.add_neighbouring_edge(edge)
-            edge.point1.add_neighbouring_edge(edge)
+            edge.point2.add_neighbouring_edge(edge)
 
-    def update_target_points_map(self, new_neighbour_point, target_points):
-        for target_point in target_points:
-            if target_point.p == new_neighbour_point.p:
-                self.target_point_map[target_point] = new_neighbour_point
-
-    def dijkstra(self, target_points):
+    def dijkstra(self):
         """Use dijkstra"""
 
         print(f"Starting Dijkstra")
@@ -59,10 +52,6 @@ class Dijkstra:
                     q.put((new_cost, neighbour_point))
                     D[neighbour_point] = new_cost
 
-                    # Update data for the node
-                    neighbour_point.set_incoming_edge(neighbour_edge)
-                    current_point.add_outgoing_edge(neighbour_edge)
-
                     # Put points in right order and update predecessor
                     neighbour_edge.point1 = current_point
                     neighbour_edge.point2 = neighbour_point
@@ -70,9 +59,15 @@ class Dijkstra:
                     neighbour_edge.p2 = neighbour_point.p
                     neighbour_edge.predecessor = current_point.incoming_edge
 
-                    self.update_target_points_map(neighbour_edge.point2, target_points)
+                    # Update data for the node
+                    neighbour_point.set_incoming_edge(neighbour_edge)
+                    current_point.add_outgoing_edge(neighbour_edge)
+
+                    # Update map of found points
+                    self.p_point_map[neighbour_point.p] = neighbour_point
 
         print(f"Dijkstra completed in {time.time() - start_time} secs")
+        print(f"Found {len(self.p_point_map)} points")
 
     def find_path(self, target_point):
         """Return the shortest path"""
@@ -80,13 +75,16 @@ class Dijkstra:
 
         # If it is not included in the map
         # Dijkstra has not reached this target
-        if target_point not in self.target_point_map:
+        if target_point.p not in self.p_point_map:
             return edges_path
 
         # Convert the target point to the local Dijkstra point
-        current_incoming = self.target_point_map[target_point].incoming_edge
+        count = 0
+        current_incoming = self.p_point_map[target_point.p].incoming_edge
         while current_incoming is not None:
             edges_path.append(current_incoming)
             current_incoming = current_incoming.point1.incoming_edge
+            if count == 10_000:
+                print("Infinite loop detected")
 
         return edges_path

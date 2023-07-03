@@ -9,17 +9,18 @@ import copy
 class Skeleton:
     def __init__(self, superpoints, all_edges, base_node) -> None:
         # define suerpoints and raw edges (not added yet but could be)
-
         self.p_to_points_map = {tuple(p): Point(tuple(p)) for p in superpoints}
         self.superpoints: List[Point] = self.p_to_points_map.values()
 
         # All edges that are found using the superpoint graph generation
         # These will be filtered to find the skeleton
-
         self.all_edges = [
             EdgeSkeleton(edge, self.p_to_points_map[edge.p1], self.p_to_points_map[edge.p2])
             for edge in all_edges
         ]
+
+        # Map from tuple p1, p2 to edge for all edges
+        self.p_to_edges_map = {(edge.p1, edge.p2): edge for edge in self.all_edges}
 
         # Base of the tree, from here it will grow up
         if base_node in self.p_to_points_map:
@@ -27,6 +28,12 @@ class Skeleton:
             self.base_node.is_base = True
         else:
             self.base_node = None
+
+        # Tree tip, the point at which the tree ends
+        self.tree_tip = None
+
+        # Print base node and its id
+        print(f"Base node: {self.base_node} with id {id(self.base_node)}")
 
         # Open points are the points at the outer edge of the skeleton
         # Here we ccan attach new edges to grow the skeleton
@@ -50,18 +57,17 @@ class Skeleton:
             edge.point1.add_neighbouring_edge(edge)
             edge.point2.add_neighbouring_edge(edge)
 
-    def get_eligible(self, n_tip):
+    def get_eligible(self):
         """Determines which edges can be added (i.e. dont violate the rules)"""
-
-        # Convert n_tip to its point counterpart
-        n_tip = self.p_to_points_map[n_tip]
 
         # First we determine which edges from open points
         # Are in our list
         # Add all neighbour edges of open points
         initial_candidates = []
         for point in self.open_points:
+            print("pointsok", point, id(point))
             for edge in point.neighbouring_edges:
+                print(edge.point1, id(edge.point1))
                 # Do not add incoming
                 if edge == point.incoming_edge:
                     continue
@@ -82,16 +88,25 @@ class Skeleton:
                     raise Exception("These should be equal")
 
         print(f"Len initial {len(initial_candidates)}")
+
+        for ed in initial_candidates:
+            print("initial", ed, id(ed), ed.point1, id(ed.point1), ed.point2)
+
         # First filter out the basic violations
         secondary_candidates = []
-        eligible = True
         for edge in initial_candidates:
+            eligible = True
+
+            print(edge, edge.predecessor, "predecessor")
+            # print("New edge")
             # check for basic topology violations
             if self.violates_basic_topology(edge):
+                # print("violates basic topology")
                 eligible = False
 
             # and label violation
             if self.violates_label_topology(edge):
+                # print("violates label topology")
                 eligible = False
 
             # if elegible add to the list
@@ -100,39 +115,21 @@ class Skeleton:
 
         print(f"Len secondary {len(secondary_candidates)}")
 
-        # Then use Dijkstra to fix the final constraint
-        # We cannot use the original points,
-        # This would destroy the skeleton structure
-        dijkstra_points = [Point(point.p) for point in self.superpoints]
-        dijkstra_p_to_points_map = {point.p: point for point in dijkstra_points}
-        dijkstra: Dijkstra = Dijkstra(
-            dijkstra_p_to_points_map.values(),
-            [
-                EdgeSkeleton(
-                    edge, dijkstra_p_to_points_map[edge.p1], dijkstra_p_to_points_map[edge.p2]
-                )
-                for edge in self.all_edges
-            ],
-            n_tip,
-        )
-
-        # The targets are the endpoints of the candidate edges
-        target_points = [edge.point2 for edge in secondary_candidates]
-
-        # Execute the dijkstra algorithm
-        dijkstra.dijkstra(target_points)
-
         # Define final constraint
         eligible_edges = []
         for edge in secondary_candidates:
             # Tip of the candidate edge is the target for our dijkstra
-            edge.dijk = (n_tip, dijkstra.find_path(edge.point2))  # save for possible later use
+            edge.dijk = (
+                self.tree_tip,
+                self.dijkstra.find_path(edge.point2),
+            )  # save for possible later use
 
             # Only eligible if there exists a path
             if len(edge.dijk[1]) > 0:
                 eligible_edges.append(edge)
 
-        print(f"Len eligible {len(secondary_candidates)}")
+        # Return the edges that are eligible for addition
+        print(f"Len eligible {len(eligible_edges)}")
         return eligible_edges
 
     def violates_basic_topology(self, candidate_edge: EdgeSkeleton):
@@ -152,6 +149,10 @@ class Skeleton:
         virtual_successors = candidate_edge.point1.outgoing_edges + [candidate_edge]
 
         # label progression
+        print("label progression")
+        print(id(candidate_edge))
+        print(candidate_edge.point1, id(candidate_edge.point1))
+        print(candidate_edge, virtual_predecessor)
         if (
             not candidate_edge.point1.is_base
             and candidate_edge.label.value < virtual_predecessor.label.value
@@ -215,15 +216,22 @@ class Skeleton:
         Adds an edge to the final skeleton
         """
 
+        # Make sure the edge is in the right reference frame
+        edge = self.p_to_edges_map[(edge.p1, edge.p2)]
+
         # Include the edge
         self.included_edges.append(edge)
 
         # Update open and closed lists
         print(50 * "-")
+        print("include")
         print(id(self))
+        print(self.base_node, id(self.base_node))
         print(self.open_points, id(self.open_points))
-        print(edge.point1)
-        print(edge.point2)
+        print(edge.point1, id(edge.point1))
+        print(edge.point2, id(edge.point2))
+        print("incoming")
+        print(edge.point1.incoming_edge, id(edge.point1.incoming_edge))
         print(50 * "-")
 
         self.open_points.remove(edge.point1)
@@ -235,40 +243,41 @@ class Skeleton:
         edge.point1.add_outgoing_edge(edge)
         edge.point2.set_incoming_edge(edge)
 
-        if edge.point1.incoming_edge is None:
+        if not edge.point1.is_base and edge.point1.incoming_edge is None:
             raise Exception(f"{edge}, point 1 {edge.p1} has no incoming: Impossible")
 
         # Update edge info
-        edge.predecessor = edge.point1.incoming_edge
-        edge.point1.incoming_edge.successors.append(edge)
+        if not edge.point1.is_base:
+            edge.predecessor = edge.point1.incoming_edge
+            edge.point1.incoming_edge.successors.append(edge)
 
-    def exclude_last_included_edge(self):
-        """
-        Throws out the last added edge
-        """
+    # def exclude_last_included_edge(self):
+    #     """
+    #     Throws out the last added edge
+    #     """
 
-        # Exclude the edge
-        last_included_edge: EdgeSkeleton = self.included_edges[-1]
+    #     # Exclude the edge
+    #     last_included_edge: EdgeSkeleton = self.included_edges[-1]
 
-        # Exclude edge
-        self.included_edges = self.included_edges[:-1]
+    #     # Exclude edge
+    #     self.included_edges = self.included_edges[:-1]
 
-        # Updated open and closed lists
-        self.open_points = self.open_points[:-1]  # Removes the endpoint of last_included_edge
-        self.closed_points = self.closed_points[
-            :-1
-        ]  # Removes the start point of last_included_edge
-        self.open_points.append(last_included_edge.point1)  # Reopen the start point
+    #     # Updated open and closed lists
+    #     self.open_points = self.open_points[:-1]  # Removes the endpoint of last_included_edge
+    #     self.closed_points = self.closed_points[
+    #         :-1
+    #     ]  # Removes the start point of last_included_edge
+    #     self.open_points.append(last_included_edge.point1)  # Reopen the start point
 
-        # Update point info
-        last_included_edge.point1.remove_last_outgoing_edge()
-        last_included_edge.point2.set_incoming_edge(None)
+    #     # Update point info
+    #     last_included_edge.point1.remove_last_outgoing_edge()
+    #     last_included_edge.point2.set_incoming_edge(None)
 
-        # Update edge info
-        last_included_edge.predecessor = None
-        last_included_edge.point1.incoming_edge.successors = (
-            last_included_edge.point1.incoming_edge.successors[:-1]
-        )
+    #     # Update edge info
+    #     last_included_edge.predecessor = None
+    #     last_included_edge.point1.incoming_edge.successors = (
+    #         last_included_edge.point1.incoming_edge.successors[:-1]
+    #     )
 
     def get_potential(self, eligible_edge):
         """
@@ -308,16 +317,45 @@ class Skeleton:
         """
         Skel score is the optimization goal value
         """
-        return sum(
+        return sum([edge.get_reward() for edge in self.included_edges])
+
+    def set_tree_tip(self, p_tree_tip):
+        """
+        Sets the tip of the skeleton
+        """
+
+        # If the tree tip is already the tree tip, do nothing
+        if self.p_to_points_map[p_tree_tip] == self.tree_tip:
+            return
+
+        self.tree_tip = self.p_to_points_map[p_tree_tip]
+
+        # Initialize the dijkstra object
+        dijkstra_points = [Point(point.p) for point in self.superpoints]
+        dijkstra_p_to_points_map = {point.p: point for point in dijkstra_points}
+
+        # Make new start point
+        dijkstra_start = dijkstra_p_to_points_map[self.tree_tip.p]
+        dijkstra_start.is_base = True
+
+        # Create dijkstra object
+        self.dijkstra: Dijkstra = Dijkstra(
+            dijkstra_p_to_points_map.values(),
             [
-                edge.get_reward(
-                    self.base_node,
+                EdgeSkeleton(
+                    Edge(edge.p1, edge.p2, edge.conf, edge.label),
+                    dijkstra_p_to_points_map[edge.p1],
+                    dijkstra_p_to_points_map[edge.p2],
                 )
-                for edge in self.included_edges
-            ]
+                for edge in self.all_edges
+            ],
+            dijkstra_start,
         )
 
-    def create_copy(self):
+        # Initialize the dijkstra object
+        self.dijkstra.dijkstra()
+
+    def create_copy(self, p_tree_tip):
         """
         Creates a full copy of the skeleton in three steps
         1) Create point copies
@@ -334,43 +372,61 @@ class Skeleton:
             new_point.neighbouring_edges = point.neighbouring_edges  # Has to be updated later
             # Base point has to be updated later
             new_skel.p_to_points_map[p] = new_point
+            print("old", point, id(point), point.incoming_edge, id(point.incoming_edge))
 
         # Update superpoints list
         new_skel.superpoints: List[Point] = new_skel.p_to_points_map.values()
 
-        p_edge_map = {}
+        new_skel.p_to_edges_map = {}
         for edge in self.all_edges:
             new_edge = EdgeSkeleton(
                 Edge(edge.p1, edge.p2, edge.conf, edge.label),
                 new_skel.p_to_points_map[edge.p1],
                 new_skel.p_to_points_map[edge.p2],
             )
-            p_edge_map[(edge.p1, edge.p2)] = new_edge
+            new_edge.predecessor = edge.predecessor  # Has to be updated later
+            new_edge.successors = edge.successors  # Has to be updated later
+            new_skel.p_to_edges_map[(edge.p1, edge.p2)] = new_edge
             # predecessors and successors have to be updated later
 
-        new_skel.all_edges = p_edge_map.values()
+        new_skel.all_edges = new_skel.p_to_edges_map.values()
 
         # Base of the tree, from here it will grow up
-        new_skel.base_node = self.p_to_points_map[self.base_node.p]
+        new_skel.base_node = new_skel.p_to_points_map[self.base_node.p]
         new_skel.base_node.is_base = True
 
         # Update edge references in point
         for point in new_skel.superpoints:
-            point.update_edge_references(p_edge_map)
+            point.update_edge_references(new_skel.p_to_edges_map)
+            print("new", point, id(point), "incoming", point.incoming_edge, id(point.incoming_edge))
 
         # Update pre- and succesors
         for edge in new_skel.all_edges:
-            edge.update_pred_reference(p_edge_map)
-            edge.update_succ_references(p_edge_map)
+            edge.update_pred_reference(new_skel.p_to_edges_map)
+            edge.update_succ_references(new_skel.p_to_edges_map)
+            # print(edge, id(edge))
 
         # Update open points
         new_skel.open_points = [new_skel.p_to_points_map[point.p] for point in self.open_points]
 
         # Update closed points
-        new_skel.closed_points = [new_skel.p_to_points_map[point.p] for point in self.open_points]
+        new_skel.closed_points = [new_skel.p_to_points_map[point.p] for point in self.closed_points]
 
         # Update included edges
-        new_skel.included_edges = [p_edge_map[(edge.p1, edge.p2)] for edge in self.included_edges]
+        new_skel.included_edges = [
+            new_skel.p_to_edges_map[(edge.p1, edge.p2)] for edge in self.included_edges
+        ]
+
+        # Set Tree tip and initialize dijkstra
+        new_skel.set_tree_tip(p_tree_tip)
+
+        for ed1, ed2 in zip(self.included_edges, new_skel.included_edges):
+            print(10 * "-")
+            print(ed1, ed2)
+            print(ed1.predecessor, ed2.predecessor)
+            print(new_skel.base_node, new_skel.base_node.is_base)
+            print(ed1.point1, id(ed1.point1), ed2.point1, id(ed2.point1))
+            print(10 * "-")
 
         return new_skel
 

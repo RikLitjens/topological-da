@@ -43,7 +43,20 @@ class Point:
 
         # Incoming edge
         if self.incoming_edge is not None:
+            # print(10 * "-")
+            # print(self, id(self))
+            # print(f"Updating incoming edge {self.incoming_edge}, id: {id(self.incoming_edge)}")
+            # print(
+            #     "point1",
+            #     p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)].point1,
+            #     id(p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)].point1),
+            # )
+            # print(
+            #     f"p_edge_map: { p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)], id(p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)])}"
+            # )
+            # print(10 * "-")
             self.incoming_edge = p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)]
+            print("updated incoming", self.incoming_edge, id(self.incoming_edge))
 
         # Outgoing edges
         new_outgoing_edges = []
@@ -166,7 +179,7 @@ class EdgeSkeleton(Edge):
         self.predecessor: EdgeSkeleton = None  # Initially None, but set once skeleton is built
         self.successors: List[EdgeSkeleton] = []  # Initially None, but set when skeleton is built
 
-    def get_reward(self, base_node):
+    def get_reward(self):
         """
         Get the optimizer score of this edge
         Based on the confidence value
@@ -176,7 +189,7 @@ class EdgeSkeleton(Edge):
         edge_score = self.get_edge_score(0.4)
         turn_penalty = (
             self.get_turn_penalty(np.pi / 4, 0.5, 2, self.predecessor)
-            if self.p1 != base_node
+            if not self.point1.is_base
             else 0
         )
         growth_penalty = self.get_growth_penalty(np.pi / 4, 0.4, 1)
@@ -194,8 +207,6 @@ class EdgeSkeleton(Edge):
         if predecessor is None:
             predecessor = self.predecessor
 
-        if type(predecessor) is int:
-            print(predecessor)
         if self.label is not None and self.label != predecessor.label:
             return 0
 
@@ -246,6 +257,9 @@ class EdgeSkeleton(Edge):
     def update_pred_reference(self, p_edge_map):
         # Update the reference to the predecessor
         if self.predecessor is not None:
+            print(
+                f"updating pred reference to {p_edge_map[(self.predecessor.p1, self.predecessor.p2)]}"
+            )
             self.predecessor = p_edge_map[(self.predecessor.p1, self.predecessor.p2)]
 
     def update_succ_references(self, p_edge_map):

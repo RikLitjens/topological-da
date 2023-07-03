@@ -7,13 +7,13 @@ import copy
 
 
 class PopSearch:
-    def __init__(self, superpoints, raw_edges, tree_tips, base_node) -> None:
-        self.K = 10
+    def __init__(self, p_superpoints, raw_edges, p_tree_tips, base_node) -> None:
+        self.K = 500
         self.k_rep = 3
         self.skeletons_k = []  # skeleton pop
-        self.superpoints = superpoints
+        self.p_superpoints = p_superpoints
         self.raw_edges = raw_edges
-        self.tree_tips = tree_tips
+        self.p_tree_tips = p_tree_tips
         self.base_node = tuple(base_node)
         self.iters_done = 0
 
@@ -25,37 +25,26 @@ class PopSearch:
         for _ in range(20):
             self.create_next_gen()
             self.iters_done += 1
-            print("Gennie")
+            print(f"Iteration {self.iters_done} done")
 
     def initialize_population(self):
         for _ in range(self.K):
-            self.skeletons_k.append(
-                Skeleton(
-                    [p for p in self.superpoints],
-                    [Edge(ed.p1, ed.p2, ed.conf, ed.label) for ed in self.raw_edges],
-                    self.base_node,
-                )
+            empty_skel = Skeleton(
+                [p for p in self.p_superpoints],
+                [Edge(ed.p1, ed.p2, ed.conf, ed.label) for ed in self.raw_edges],
+                self.base_node,
             )
+
+            empty_skel.set_tree_tip(random.choice(self.p_tree_tips))
+            self.skeletons_k.append(empty_skel)
 
     def create_next_gen(self):
         weights = self.get_weights()
         candidate_skel_edge_pairs = list(weights.keys())
         probabilities = list(weights.values())
 
-        print(len(candidate_skel_edge_pairs))
-        print(len(probabilities))
-
         chosen = []
         while len(chosen) != self.K:
-            print(self.K - len(chosen))
-            print(len(chosen))
-            print(
-                len(
-                    random.choices(
-                        candidate_skel_edge_pairs, weights=probabilities, k=self.K - len(chosen)
-                    )
-                )
-            )
             chosen += random.choices(
                 candidate_skel_edge_pairs, weights=probabilities, k=self.K - len(chosen)
             )
@@ -76,7 +65,7 @@ class PopSearch:
         self.skeletons_k = []
         for candidate_pair in chosen:
             print("Updating this generation")
-            new_skel = candidate_pair[0].create_copy()
+            new_skel = candidate_pair[0].create_copy(random.choice(self.p_tree_tips))
             new_skel.include_eligible_edge(candidate_pair[1])
             self.skeletons_k.append(new_skel)
 
@@ -88,11 +77,10 @@ class PopSearch:
         ranks_skeleton = create_rank_dict(lambda skel: skel.get_skel_score(), self.skeletons_k)
 
         # define rank_skelly
-        print(ranks_skeleton)
         for skel in self.skeletons_k:
             rank_skeleton = ranks_skeleton[skel]
-            n_tip = random.choice(self.tree_tips)
-            eligible_edges = skel.get_eligible(n_tip)
+            p_tip = random.choice(self.p_tree_tips)
+            eligible_edges = skel.get_eligible()
             ranks_edges = create_rank_dict(lambda ed: skel.get_potential(ed), eligible_edges)
 
             # define edge rank and weights
