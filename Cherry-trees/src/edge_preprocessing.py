@@ -10,15 +10,19 @@ from deepnet.net_main import CherryLoader
 import os
 
 
-def edge_evaluation(edges, points, clusters, r_super, bag):
+def edge_evaluation(edges, points, clusters, r_super, bag, pcd):
     total_cluster = []
     # Convert points to new coordinate system
     histograms = []
+    pts = pcd.points
     for k in range(len(edges)):
         n_i = points[edges[k][0]]
         n_j = points[edges[k][1]]
 
-        total_cluster = np.concatenate((clusters[edges[k][0]], clusters[edges[k][1]]), axis=0)
+        # Get clusters for the two points and combine them
+        c1 = get_cluster(edges[k][0], clusters, pts)
+        c2 = get_cluster(edges[k][1], clusters, pts)
+        total_cluster = union_of_points(c1, c2)
 
         x_axis_new, y_axis_new, z_axis_new = new_coord_system(n_i, n_j, total_cluster)
 
@@ -56,7 +60,7 @@ def get_edges(points, r_super):
     # Define the edges
     for i in range(len(points)):
         for j in range(i + 1, len(points)):
-            if dist(points[i], points[j]) <= 4 * r_super:
+            if dist(points[i], points[j]) <= 2 * r_super:
                 edges.append([i, j])
                 # edges.append([j, i])
 

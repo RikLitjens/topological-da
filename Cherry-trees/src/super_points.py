@@ -21,62 +21,63 @@ def get_super_points(data, radius):
         super_points (numpy array): the super points
     """
     start = time.time()
-    sorted_data = data[data[:, 0].argsort()]
-    mask = np.full(len(sorted_data), True, dtype=bool)
-    indices = np.arange(0, len(sorted_data))
+    sort_idx = data[:, 0].argsort()
+    sorted_data = data[sort_idx]
+    mask = np.arange(len(sorted_data))
     counter = len(mask)
-
     super_points = []
-    clusters = []
+    clusters = np.full(data.shape[0], -1, dtype=int)
     
     print("Calculating super points...")
-    
+    cluster_id = 0
     while counter > 0:
-        print(f" Points left: {counter}")
-        sample_index = np.random.choice(indices[mask], 1)
-        current_point = sorted_data[sample_index][0]
+        print(f"Cluster: {cluster_id} | Points left: {counter}")
 
-        cluster = [current_point]
-        cluster_indices = [sample_index[0]]
-
-        for c, candidate_point in enumerate(sorted_data[mask][sample_index[0]+1:]):
-            if c != sample_index:
-                if len(current_point) != 3:
-                    print(f"FAILURE! Current point: {current_point}")
-                if len(candidate_point) != 3:
-                    print(f"FAILURE! Candidate point: {candidate_point}")
-                distance = dist(current_point, candidate_point)
-                if distance <= radius:
-                    cluster.append(candidate_point)
-                    cluster_indices.append(sample_index[0]+c+1)
-                if abs(current_point[0]-candidate_point[0]) > radius:
-                    break
-
-        for c, candidate_point in enumerate(sorted_data[mask][sample_index[0]-1:-1]):
-            if c != sample_index:
-                distance = dist(current_point, candidate_point)
-                if distance <= radius:
-                    cluster.append(candidate_point)
-                    cluster_indices.append(sample_index[0]-c-1)
-                if abs(current_point[0]-candidate_point[0]) > radius:
-                    break
+        # Get the smapled point
+        sample_index = np.random.randint(len(mask)) # relative point in the mask
+        masked_data = sorted_data[mask]
+        current_point = masked_data[sample_index]
         
-        counter -= len(cluster)
+        # Build the cluster
+        cluster_indices = [sample_index]
+        for c, candidate_point in enumerate(masked_data):
+            if c == sample_index: continue
 
-        mask[mask][cluster_indices] = False
-        clusters.append(cluster)
-        super_points.append(np.mean(cluster, axis=0))
+            distance = dist(current_point, candidate_point)
+            if distance <= radius:
+                cluster_indices.append(c)
+        
+        # for c, candidate_point in enumerate(masked_data[sample_index+1:]):
+        #     if c != sample_index:
+        #         distance = dist(current_point, candidate_point)
+        #         if distance <= radius:
+        #             cluster_indices.append(sample_index+c+1)
+        #         if abs(current_point[0]-candidate_point[0]) > radius:
+        #             break
+
+        # for c, candidate_point in enumerate(masked_data[sample_index-1:-1]):
+        #     if c != sample_index:
+        #         distance = dist(current_point, candidate_point)
+        #         if distance <= radius:
+        #             cluster_indices.append(sample_index-c-1)
+        #         if abs(current_point[0]-candidate_point[0]) > radius:
+        #             break
+        
+        counter -= len(cluster_indices)
+
+        
+        clusters[mask[cluster_indices]] = cluster_id
+        cluster_id += 1
+        super_points.append(np.mean(sorted_data[mask[cluster_indices]], axis=0))
+        mask = np.delete(mask, cluster_indices)
+
+    # Unsort the cluster order
+    clusters = clusters[sort_idx.argsort()]
 
     end = time.time()
     print(f"Total time to calculate super points: {end-start}")
 
     return clusters, np.asarray(super_points)
-
-def load_super_points(path):
-    """Loads the super points from a file and returns them as a numpy array."""
-    pcd = load_pcd(path)
-    data = get_data(pcd)
-    return get_super_points(data, 0.1)
 
 if __name__ == "__main__":
     pcd = load_pcd("Cherry-trees/data/cloud_final_0.pcd")
