@@ -26,7 +26,7 @@ local_path = get_data_path()
 
 bag_id = 2
 # Load the point cloud
-pcd = load_point_cloud(local_path, bag_id, "cloud_final")
+pcd = rotate_z_up(load_point_cloud(local_path, bag_id, "cloud_final"))
 # clusters, super_points = get_super_points(get_data(pcd), 0.05)
 # print(len(super_points))
 # visualize_point_cloud(super_points)
@@ -74,7 +74,7 @@ pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 
 # # get tips
 # g = Graph(super_points, rich_edges)
-# g.plot()
+# g.plot()-
 # mst = g.kruskal()
 # mst.plot()
 # mst_cut = cut_tree(super_points, rich_edges, 0.6)
@@ -82,4 +82,4 @@ pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 
 
 
-compute_reeb(get_data(pcd), 0.3, 0.05)
+compute_reeb(get_data(pcd), 0.24, 0.03)

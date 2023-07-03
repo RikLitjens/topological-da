@@ -1,9 +1,10 @@
-from helpers import choose_f, dist, get_data_path, load_point_cloud, numpy_to_pcd, visualize_point_cloud
+from helpers import choose_f, dist, get_data_path, load_point_cloud, numpy_to_pcd, visualize_point_cloud, filter_data
 from reebgraph.knn import KD, RT
 from reebgraph.reeb_graph import PointVal, ReebNode
 from sklearn.cluster import DBSCAN
 import open3d as o3d
 import numpy as np
+from preprocess import rotate_z_up
 
 def compute_reeb(pcd, strip_size, tau):
     f = choose_f()
@@ -15,11 +16,16 @@ def compute_reeb(pcd, strip_size, tau):
     
     strips, ranges = get_strips(point_vals, strip_size)
 
-    for strip in strips:
+    strip_pcds = []
+    for i in range(len(strips)):
         vis_list = []
-        for point_val in strip:
+        for point_val in strips[i]:
             vis_list.append(point_val.get_point())
-        # visualize_point_cloud(numpy_to_pcd(vis_list))
+        strip_pcd = np.asarray(vis_list)
+        strip_pcd = numpy_to_pcd(vis_list)
+        strip_pcd.paint_uniform_color([i % 2, 0, (i + 1) % 2])
+        strip_pcds.append(strip_pcd)
+    visualize_point_cloud(strip_pcds)
 
     reeb_nodes = find_reeb_nodes(strips, ranges, tau)
     
@@ -74,21 +80,29 @@ def connected_components(strip, tau):
     #     points -= component
     #     components.append(component)
 
-    components = DBSCAN(eps=tau, algorithm='ball_tree').fit(points).labels_
-    print(components)
+    points = np.array(points)
+    components = DBSCAN(eps=tau, min_samples=12, metric='euclidean').fit(points).labels_
     j = 0
     all_components = [[]]
+    indices = {0 : 0}
     for i in range(len(points)):
-        if components[i] > j:
-            all_components.append([])
-            j = j + 1
-        all_components[j].append((points[i][0], points[i][1], points[i][2]))
+        if components[i] >= 0:
+            if not (components[i] in indices.keys()):
+                indices[components[i]] = len(all_components)
+                all_components.append([])
+            all_components[indices[components[i]]].append((points[i][0], points[i][1], points[i][2]))
     final_components = []
     for component in all_components:
         if len(component) > 5:
             final_components.append(component)
     
-    print(f"I got here! I found {len(final_components)} components.")
+    # pcd_list = []
+    # for component in final_components:
+    #     comp_pcd = numpy_to_pcd(component)
+    #     pcd_list.append(comp_pcd)
+    # for i in range(len(pcd_list)):
+    #     pcd_list[i].paint_uniform_color([(len(pcd_list) - i) / len(pcd_list), 0, i / len(pcd_list)])
+    # visualize_point_cloud(pcd_list)
     return final_components, compute_centroids(final_components)
 
 def compute_centroids(components):
@@ -129,25 +143,44 @@ def find_reeb_nodes(strips, ranges, tau):
             temp_nodes.append(ReebNode(centroids[j], components[j], ranges[i]))
         reeb_nodes.append(temp_nodes)
     
-    reeb_points = []
+    ps_total = []
+    reeb_total = []
     for subnode in reeb_nodes:
+        reeb_points = []
+        ps_row = []
         for node in subnode:
             reeb_point = [node.get_point()[0], node.get_point()[1], node.get_point()[2]]
             reeb_points.append(reeb_point)
+            reeb_total.append(reeb_point)
 
             ps_fake = node.get_pointcloud()
             ps = []
             for (x, y, z) in ps_fake:
                 ps.append([x, y, z])
-            ps = np.asarray(ps)
-            ps = numpy_to_pcd(ps)
-            ps.paint_uniform_color([1, 0, 0])
-            reeb_point = np.asarray([reeb_point])
-            reeb_node = numpy_to_pcd(reeb_point)
-            reeb_node.paint_uniform_color([0, 1, 0])
-            visualize_point_cloud([ps, reeb_node])
-    
+                ps_row.append([x, y, z])
+                ps_total.append([x, y, z])
+            # ps = np.asarray(ps)
+            # ps = numpy_to_pcd(ps)
+            # ps.paint_uniform_color([1, 0, 0])
+            # reeb_point = np.asarray([reeb_point])
+            # reeb_node = numpy_to_pcd(reeb_point)
+            # reeb_node.paint_uniform_color([0, 1, 0])
+            # visualize_point_cloud([ps, reeb_node])
+        # print(len(ps_row))
+        # ps_row = filter_data(ps_row, 0.85)
+        # print(len(ps_row))
+        # # ps_row = np.asarray(ps_row)
+        # ps_pcd = numpy_to_pcd(ps_row)
+        # reeb_pcd = numpy_to_pcd(reeb_points)
+        # ps_pcd.paint_uniform_color([1, 0, 0])
+        # reeb_pcd.paint_uniform_color([0, 1, 0])
+        # visualize_point_cloud([ps_pcd, reeb_pcd])
+
+    reeb_total = np.asarray(reeb_total)
+    reeb_total_pcd = numpy_to_pcd(reeb_total)
+    visualize_point_cloud([reeb_total_pcd])
     get_edges(reeb_nodes, tau)
+
     return reeb_nodes
 
 def get_edges(reeb_nodes, tau):

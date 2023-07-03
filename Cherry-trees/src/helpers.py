@@ -67,3 +67,11 @@ def choose_f():
     def f(x, y, z):
         return z
     return f
+
+def filter_data(data, percentage):
+    """Filters a row with a probability of {percentage}"""
+    filtered_data = []
+    for row in data:
+        if np.random.random() > percentage:
+            filtered_data.append(row)
+    return np.asarray(filtered_data)
