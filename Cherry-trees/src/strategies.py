@@ -4,6 +4,8 @@ from helpers import *
 from edge_preprocessing import *
 from deepnet.neuralnet import *
 from deepnet.net_main import *
+from popsearch.mst import *
+from operator import itemgetter
 
 def strat_CNN(pcd, prepped_model=None, bag_id=0):
     """ 
@@ -60,8 +62,19 @@ def strat_persistent_homology(pcd):
     edge_conf =  calc_edge_confidences(pcd, clusters, edges)
 
     # Convert to edge class
-    egde_list = build_edge_list(edge_conf, edges, super_points)
+    edge_list = build_edge_list(edge_conf, edges, super_points)
 
+    
+    # Create the graph
+    G = Graph(super_points, edge_list)
+    
+    # Calculate the connected components
+    cc = G.find_connected_components(True)
+
+    # Determine lowest point of largest connected component
+    lengths = [len(c) for c in cc]
+    lowest = min(cc[np.argmax(lengths)], key=itemgetter(2))
+    
     # TODO: Create the tree based on constraints
 
 def strat_reeb_graph(pcd):
