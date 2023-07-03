@@ -8,7 +8,7 @@ import copy
 
 class PopSearch:
     def __init__(self, p_superpoints, raw_edges, p_tree_tips, base_node) -> None:
-        self.K = 500
+        self.K = 5
         self.k_rep = 3
         self.skeletons_k = []  # skeleton pop
         self.p_superpoints = p_superpoints
@@ -22,7 +22,7 @@ class PopSearch:
         self.initialize_population()
 
         # todo
-        for _ in range(20):
+        for _ in range(500):
             self.create_next_gen()
             self.iters_done += 1
             print(f"Iteration {self.iters_done} done")

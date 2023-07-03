@@ -32,9 +32,6 @@ class Skeleton:
         # Tree tip, the point at which the tree ends
         self.tree_tip = None
 
-        # Print base node and its id
-        print(f"Base node: {self.base_node} with id {id(self.base_node)}")
-
         # Open points are the points at the outer edge of the skeleton
         # Here we ccan attach new edges to grow the skeleton
         self.open_points = [self.base_node]
@@ -65,9 +62,7 @@ class Skeleton:
         # Add all neighbour edges of open points
         initial_candidates = []
         for point in self.open_points:
-            print("pointsok", point, id(point))
             for edge in point.neighbouring_edges:
-                print(edge.point1, id(edge.point1))
                 # Do not add incoming
                 if edge == point.incoming_edge:
                     continue
@@ -89,15 +84,14 @@ class Skeleton:
 
         print(f"Len initial {len(initial_candidates)}")
 
-        for ed in initial_candidates:
-            print("initial", ed, id(ed), ed.point1, id(ed.point1), ed.point2)
+        # for ed in initial_candidates:
+        #     print("initial", ed, id(ed), ed.point1, id(ed.point1), ed.point2)
 
         # First filter out the basic violations
         secondary_candidates = []
         for edge in initial_candidates:
             eligible = True
 
-            print(edge, edge.predecessor, "predecessor")
             # print("New edge")
             # check for basic topology violations
             if self.violates_basic_topology(edge):
@@ -149,10 +143,10 @@ class Skeleton:
         virtual_successors = candidate_edge.point1.outgoing_edges + [candidate_edge]
 
         # label progression
-        print("label progression")
-        print(id(candidate_edge))
-        print(candidate_edge.point1, id(candidate_edge.point1))
-        print(candidate_edge, virtual_predecessor)
+        # print("label progression")
+        # print(id(candidate_edge))
+        # print(candidate_edge.point1, id(candidate_edge.point1))
+        # print(candidate_edge, virtual_predecessor)
         if (
             not candidate_edge.point1.is_base
             and candidate_edge.label.value < virtual_predecessor.label.value
@@ -223,16 +217,16 @@ class Skeleton:
         self.included_edges.append(edge)
 
         # Update open and closed lists
-        print(50 * "-")
-        print("include")
-        print(id(self))
-        print(self.base_node, id(self.base_node))
-        print(self.open_points, id(self.open_points))
-        print(edge.point1, id(edge.point1))
-        print(edge.point2, id(edge.point2))
-        print("incoming")
-        print(edge.point1.incoming_edge, id(edge.point1.incoming_edge))
-        print(50 * "-")
+        # print(50 * "-")
+        # print("include")
+        # print(id(self))
+        # print(self.base_node, id(self.base_node))
+        # print(self.open_points, id(self.open_points))
+        # print(edge.point1, id(edge.point1))
+        # print(edge.point2, id(edge.point2))
+        # print("incoming")
+        # print(edge.point1.incoming_edge, id(edge.point1.incoming_edge))
+        # print(50 * "-")
 
         self.open_points.remove(edge.point1)
         self.closed_points.append(edge.point1)
@@ -372,7 +366,7 @@ class Skeleton:
             new_point.neighbouring_edges = point.neighbouring_edges  # Has to be updated later
             # Base point has to be updated later
             new_skel.p_to_points_map[p] = new_point
-            print("old", point, id(point), point.incoming_edge, id(point.incoming_edge))
+            # print("old", point, id(point), point.incoming_edge, id(point.incoming_edge))
 
         # Update superpoints list
         new_skel.superpoints: List[Point] = new_skel.p_to_points_map.values()
@@ -398,7 +392,7 @@ class Skeleton:
         # Update edge references in point
         for point in new_skel.superpoints:
             point.update_edge_references(new_skel.p_to_edges_map)
-            print("new", point, id(point), "incoming", point.incoming_edge, id(point.incoming_edge))
+            # print("new", point, id(point), "incoming", point.incoming_edge, id(point.incoming_edge))
 
         # Update pre- and succesors
         for edge in new_skel.all_edges:
@@ -420,13 +414,13 @@ class Skeleton:
         # Set Tree tip and initialize dijkstra
         new_skel.set_tree_tip(p_tree_tip)
 
-        for ed1, ed2 in zip(self.included_edges, new_skel.included_edges):
-            print(10 * "-")
-            print(ed1, ed2)
-            print(ed1.predecessor, ed2.predecessor)
-            print(new_skel.base_node, new_skel.base_node.is_base)
-            print(ed1.point1, id(ed1.point1), ed2.point1, id(ed2.point1))
-            print(10 * "-")
+        # for ed1, ed2 in zip(self.included_edges, new_skel.included_edges):
+        #     print(10 * "-")
+        #     print(ed1, ed2)
+        #     print(ed1.predecessor, ed2.predecessor)
+        #     print(new_skel.base_node, new_skel.base_node.is_base)
+        #     print(ed1.point1, id(ed1.point1), ed2.point1, id(ed2.point1))
+        #     print(10 * "-")
 
         return new_skel
 

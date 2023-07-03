@@ -18,7 +18,7 @@ class Dijkstra:
     def dijkstra(self):
         """Use dijkstra"""
 
-        print(f"Starting Dijkstra")
+        # print(f"Starting Dijkstra")
         start_time = time.time()
         D = {point: float("inf") for point in self.points}
         D[self.start_point] = 0
@@ -66,8 +66,8 @@ class Dijkstra:
                     # Update map of found points
                     self.p_point_map[neighbour_point.p] = neighbour_point
 
-        print(f"Dijkstra completed in {time.time() - start_time} secs")
-        print(f"Found {len(self.p_point_map)} points")
+        # print(f"Dijkstra completed in {time.time() - start_time} secs")
+        # print(f"Found {len(self.p_point_map)} points")
 
     def find_path(self, target_point):
         """Return the shortest path"""

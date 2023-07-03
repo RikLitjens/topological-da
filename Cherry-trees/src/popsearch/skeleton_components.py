@@ -56,7 +56,6 @@ class Point:
             # )
             # print(10 * "-")
             self.incoming_edge = p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)]
-            print("updated incoming", self.incoming_edge, id(self.incoming_edge))
 
         # Outgoing edges
         new_outgoing_edges = []
@@ -257,9 +256,9 @@ class EdgeSkeleton(Edge):
     def update_pred_reference(self, p_edge_map):
         # Update the reference to the predecessor
         if self.predecessor is not None:
-            print(
-                f"updating pred reference to {p_edge_map[(self.predecessor.p1, self.predecessor.p2)]}"
-            )
+            # print(
+            #     f"updating pred reference to {p_edge_map[(self.predecessor.p1, self.predecessor.p2)]}"
+            # )
             self.predecessor = p_edge_map[(self.predecessor.p1, self.predecessor.p2)]
 
     def update_succ_references(self, p_edge_map):
