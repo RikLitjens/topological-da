@@ -39,6 +39,7 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
     # convert to edge class
     edge_list = build_edge_list(edge_confidences, edges, super_points)
 
+    # TODO: Create the tree based on constraints
 
     pass
 
@@ -61,7 +62,7 @@ def strat_persistent_homology(pcd):
     # Convert to edge class
     egde_list = build_edge_list(edge_conf, edges, super_points)
 
-    # Create the tree based on constraints
+    # TODO: Create the tree based on constraints
 
 def strat_reeb_graph(pcd):
     """

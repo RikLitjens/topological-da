@@ -12,7 +12,7 @@ from popsearch.skeleton import LabelEnum
 from popsearch.mst import *
 from preprocess import clean_up, rotate_z_up
 import pickle
-
+from strategies import *
 # # test_mst()
 
 
@@ -94,9 +94,14 @@ import pickle
 #         edge_objects.append(Edge(p_start, p_end, conf, label))
 
 
-#######################
-# Persistent homology #
-#######################
+# Strategy to use
+# strat = "CNN"
+strat = "homology"
+# strat = "reeb"
+
+#############################
+# Point cloud preprocessing #
+#############################
 
 local_path = get_data_path()
 bag_id = 0
@@ -106,20 +111,26 @@ pcd = load_point_cloud(local_path, bag_id, "cloud_final")
 pcd = rotate_z_up(pcd)
 pcd = clean_up(pcd)
 
-# Calculate the superpoints and corresponding clusters
-clusters, super_points = get_super_points(get_data(pcd), 0.1)
+################
+# CNN strategy #
+################
 
-# Calculate the MST
-edges = get_edges(super_points, 0.1)
+if strat == "CNN":
+    strat_CNN(pcd, prepped_model=True, bag_id=bag_id)
 
-# Calculate the edge confidences
-edge_conf =  calc_edge_confidences(pcd, clusters, edges)
+#############################
+# Persistent homology strat #
+#############################
 
-# Build edge list
-egde_list = build_edge_list(edge_conf, edges, super_points)
+if strat == "homology":
+    strat_persistent_homology(pcd)
 
-# Other stuff
+#######################
+# Reeb graph strategy #
+#######################
 
+if strat == "reeb":
+    strat_reeb_graph(pcd)
 
 
 
