@@ -2,7 +2,8 @@ import open3d as o3d
 import numpy as np
 import time
 from helpers import *
-import sys
+from preprocess import *
+
 # def load_pcd(path):
 #     """Loads a point cloud from a file and returns it as an open3d point cloud."""
 #     pcd_file = path
@@ -79,24 +80,12 @@ def get_super_points(data, radius):
     return clusters, np.asarray(super_points)
 
 if __name__ == "__main__":
-# Get the path to the data
-    local_path = get_data_path()
+    pcd = load_pcd("Cherry-trees/data/cloud_final_0.pcd")
+    
+    cleaned_pcd = clean_up(pcd)
 
-    print(local_path)
-
-    bag_id = 4
-    # Load the point cloud
-    pcd = load_point_cloud(local_path, bag_id, "cloud_final")
-
-    # Load the superpoints
-    clusters, super_points = get_super_points(get_data(pcd), 0.1)
-
-    # Make point cloud out of superpoints
-    super_points_pcd = numpy_to_pcd(super_points)
-
-    # # Visualize the point cloud
-    o3d.visualization.draw_geometries([super_points_pcd],
-                                        zoom=0.455,
-                                        front=[-0.4999, -0.1659, -0.8499],
-                                        lookat=[2.1813, 2.0619, 2.0999],
-                                        up=[0.1204, -0.9852, 0.1215])
+    data = get_data(cleaned_pcd)
+    _, super_array = get_super_points(data, 0.1)
+    super_pcd = numpy_to_pcd(super_array)
+    
+    visualize(super_pcd, None)
