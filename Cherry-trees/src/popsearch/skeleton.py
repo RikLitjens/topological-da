@@ -1,8 +1,11 @@
 from typing import List
 from popsearch.skeleton_components import Edge, Point, LabelEnum, EdgeSkeleton
-from popsearch.dijkstra import Dijkstra
 
 import numpy as np
+import copy
+from matplotlib import pyplot as plt
+import random
+from mpl_toolkits.mplot3d import Axes3D
 import copy
 
 
@@ -20,7 +23,7 @@ class Skeleton:
         ]
 
         # Map from tuple p1, p2 to edge for all edges
-        self.p_to_edges_map = {(edge.p1, edge.p2): edge for edge in self.all_edges}
+        self.p_to_edges_map = {(edge.p1, edge.p2, edge.label): edge for edge in self.all_edges}
 
         # Base of the tree, from here it will grow up
         if base_node in self.p_to_points_map:
@@ -30,6 +33,7 @@ class Skeleton:
             self.base_node = None
 
         # Tree tip, the point at which the tree ends
+        self.found_p_tree_tips = []
         self.tree_tip = None
         self.dijkstra = None
 
@@ -65,7 +69,7 @@ class Skeleton:
         for point in self.open_points:
             for edge in point.neighbouring_edges:
                 # Do not add incoming
-                if edge == point.incoming_edge:
+                if edge == point.incoming_edge or edge in point.outgoing_edges:
                     continue
 
                 # Add edge
@@ -82,8 +86,6 @@ class Skeleton:
                     print(edge)
                     print(point)
                     raise Exception("These should be equal")
-
-        print(f"Len initial {len(initial_candidates)}")
 
         # for ed in initial_candidates:
         #     print("initial", ed, id(ed), ed.point1, id(ed.point1), ed.point2)
@@ -108,8 +110,6 @@ class Skeleton:
             if eligible:
                 secondary_candidates.append(edge)
 
-        print(f"Len secondary {len(secondary_candidates)}")
-
         # Define final constraint
         eligible_edges = []
         for edge in secondary_candidates:
@@ -124,7 +124,7 @@ class Skeleton:
                 eligible_edges.append(edge)
 
         # Return the edges that are eligible for addition
-        print(f"Len eligible {len(eligible_edges)}")
+        # print(f"Len eligible {len(eligible_edges)}")
         return eligible_edges
 
     def violates_basic_topology(self, candidate_edge: EdgeSkeleton):
@@ -206,30 +206,17 @@ class Skeleton:
         # otherwise
         return False
 
-    def include_eligible_edge(self, edge: EdgeSkeleton):
+    def include_eligible_edge(self, edge: EdgeSkeleton, tree_tips):
         """
         Adds an edge to the final skeleton
         """
 
         # Make sure the edge is in the right reference frame
-        edge = self.p_to_edges_map[(edge.p1, edge.p2)]
+        edge = self.p_to_edges_map[(edge.p1, edge.p2, edge.label)]
 
         # Include the edge
         self.included_edges.append(edge)
 
-        # Update open and closed lists
-        # print(50 * "-")
-        # print("include")
-        # print(id(self))
-        # print(self.base_node, id(self.base_node))
-        # print(self.open_points, id(self.open_points))
-        # print(edge.point1, id(edge.point1))
-        # print(edge.point2, id(edge.point2))
-        # print("incoming")
-        # print(edge.point1.incoming_edge, id(edge.point1.incoming_edge))
-        # print(50 * "-")
-
-        self.open_points.remove(edge.point1)
         self.closed_points.append(edge.point1)
 
         self.open_points.append(edge.point2)
@@ -238,6 +225,10 @@ class Skeleton:
         edge.point1.add_outgoing_edge(edge)
         edge.point2.set_incoming_edge(edge)
 
+        # Update tree tips process
+        if edge.point2.p in tree_tips:
+            self.found_p_tree_tips.append(edge.point2.p)
+
         if not edge.point1.is_base and edge.point1.incoming_edge is None:
             raise Exception(f"{edge}, point 1 {edge.p1} has no incoming: Impossible")
 
@@ -245,34 +236,6 @@ class Skeleton:
         if not edge.point1.is_base:
             edge.predecessor = edge.point1.incoming_edge
             edge.point1.incoming_edge.successors.append(edge)
-
-    # def exclude_last_included_edge(self):
-    #     """
-    #     Throws out the last added edge
-    #     """
-
-    #     # Exclude the edge
-    #     last_included_edge: EdgeSkeleton = self.included_edges[-1]
-
-    #     # Exclude edge
-    #     self.included_edges = self.included_edges[:-1]
-
-    #     # Updated open and closed lists
-    #     self.open_points = self.open_points[:-1]  # Removes the endpoint of last_included_edge
-    #     self.closed_points = self.closed_points[
-    #         :-1
-    #     ]  # Removes the start point of last_included_edge
-    #     self.open_points.append(last_included_edge.point1)  # Reopen the start point
-
-    #     # Update point info
-    #     last_included_edge.point1.remove_last_outgoing_edge()
-    #     last_included_edge.point2.set_incoming_edge(None)
-
-    #     # Update edge info
-    #     last_included_edge.predecessor = None
-    #     last_included_edge.point1.incoming_edge.successors = (
-    #         last_included_edge.point1.incoming_edge.successors[:-1]
-    #     )
 
     def get_potential(self, eligible_edge):
         """
@@ -300,12 +263,18 @@ class Skeleton:
         sorted_penalties = sorted(dijk_turn_penalties, reverse=True)
 
         # Drop the highest values
-        n_dropped = 2 - eligible_edge.label.value
-        dropped_penalties = sorted_penalties[n_dropped:]
+        # n_dropped = 2 - eligible_edge.label.value
+        # dropped_penalties = sorted_penalties[n_dropped:]
+        dropped_penalties = sorted_penalties
 
         # calculate final potantial component
         dijk_turn_penalty_score = sum(dropped_penalties)
 
+        # print(10 * "-")
+        # print("eligible_edge", eligible_edge)
+        # print("new_skel_score", new_skel_score)
+        # print("dijk_edge_score", dijk_edge_score)
+        # print("dijk_turn_penalty_score", dijk_turn_penalty_score)
         return new_skel_score + dijk_edge_score - dijk_turn_penalty_score
 
     def get_skel_score(self):
@@ -314,17 +283,18 @@ class Skeleton:
         """
         return sum([edge.get_reward() for edge in self.included_edges])
 
-    def set_tree_tip(self, p_tree_tip, dijkstra):
+    def set_random_tree_tip(self, p_tree_tips, dijkstras):
         """
         Sets the tip of the skeleton
         """
 
-        # If the tree tip is already the tree tip, do nothing
-        if self.p_to_points_map[p_tree_tip] == self.tree_tip:
-            return
+        # Randomly choose a tip from p_tree tips that is not in the processed list
+        p_chosen_tree_tip = random.choice(
+            [p for p in p_tree_tips if p not in self.found_p_tree_tips]
+        )
 
-        self.tree_tip = self.p_to_points_map[p_tree_tip]
-        self.dijkstra = dijkstra
+        self.tree_tip = self.p_to_points_map[p_chosen_tree_tip]
+        self.dijkstra = dijkstras[p_chosen_tree_tip]
 
     def create_copy(self, p_tree_tip, dijkstra):
         """
@@ -351,13 +321,13 @@ class Skeleton:
         new_skel.p_to_edges_map = {}
         for edge in self.all_edges:
             new_edge = EdgeSkeleton(
-                Edge(edge.p1, edge.p2, edge.conf, edge.label),
+                Edge(edge.p1, edge.p2, edge.conf, copy.deepcopy(edge.label)),
                 new_skel.p_to_points_map[edge.p1],
                 new_skel.p_to_points_map[edge.p2],
             )
             new_edge.predecessor = edge.predecessor  # Has to be updated later
             new_edge.successors = edge.successors  # Has to be updated later
-            new_skel.p_to_edges_map[(edge.p1, edge.p2)] = new_edge
+            new_skel.p_to_edges_map[(edge.p1, edge.p2, edge.label)] = new_edge
             # predecessors and successors have to be updated later
 
         new_skel.all_edges = new_skel.p_to_edges_map.values()
@@ -365,6 +335,10 @@ class Skeleton:
         # Base of the tree, from here it will grow up
         new_skel.base_node = new_skel.p_to_points_map[self.base_node.p]
         new_skel.base_node.is_base = True
+
+        # # Set tree tip
+        # new_skel.tree_tip = new_skel.p_to_points_map[self.tree_tip.p]
+        # new_skel.processed_p_tree_tips = self.processed_p_tree_tips  # This is just tuples
 
         # Update edge references in point
         for point in new_skel.superpoints:
@@ -385,11 +359,15 @@ class Skeleton:
 
         # Update included edges
         new_skel.included_edges = [
-            new_skel.p_to_edges_map[(edge.p1, edge.p2)] for edge in self.included_edges
+            new_skel.p_to_edges_map[(edge.p1, edge.p2, edge.label)] for edge in self.included_edges
         ]
 
         # Set Tree tip and initialize dijkstra
-        new_skel.set_tree_tip(p_tree_tip, dijkstra)
+        new_skel.found_p_tree_tips = [p for p in self.found_p_tree_tips]
+        new_skel.tree_tip = new_skel.p_to_points_map[self.tree_tip.p]
+
+        # Also update
+        new_skel.set_random_tree_tip(p_tree_tip, dijkstra)
 
         # for ed1, ed2 in zip(self.included_edges, new_skel.included_edges):
         #     print(10 * "-")
@@ -400,6 +378,58 @@ class Skeleton:
         #     print(10 * "-")
 
         return new_skel
+
+    def plot(self, eligible=[]):
+        # Create a 3D plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+
+        # Plot the vertices
+        x = [point.p[0] for point in self.superpoints]
+        y = [point.p[1] for point in self.superpoints]
+        z = [point.p[2] for point in self.superpoints]
+        colors = [
+            "black" if point.p not in self.found_p_tree_tips else "g" for point in self.superpoints
+        ]
+        colors = [
+            "red" if point == self.base_node else c for c, point in zip(colors, self.superpoints)
+        ]
+        ax.scatter(x, y, z, c=colors, marker="o", s=10)
+
+        # Plot the MST edges
+        color_mapping = {
+            LabelEnum.LEADER: "r",
+            LabelEnum.SIDE: "g",
+            LabelEnum.SUPPORT: "b",
+            LabelEnum.TRUNK: "y",
+            10: "red",
+        }
+        for edge in self.included_edges:
+            print(
+                "I am painting an edge with label",
+                edge.label,
+                "and color",
+                color_mapping.get(edge.label, "k"),
+            )
+            x_coords = [edge.p1[0], edge.p2[0]]
+            y_coords = [edge.p1[1], edge.p2[1]]
+            z_coords = [edge.p1[2], edge.p2[2]]
+            c = color_mapping.get(edge.label, "k")
+            ax.plot(x_coords, y_coords, z_coords, c=c)
+
+        for edge in eligible:
+            x_coords = [edge.p1[0], edge.p2[0]]
+            y_coords = [edge.p1[1], edge.p2[1]]
+            z_coords = [edge.p1[2], edge.p2[2]]
+            c = color_mapping.get(10, "k")
+            ax.plot(x_coords, y_coords, z_coords, c=c)
+
+        # Set labels and display the plot
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+
+        plt.show()
 
     def __eq__(self, other) -> bool:
         return self.included_edges == other.included_edges

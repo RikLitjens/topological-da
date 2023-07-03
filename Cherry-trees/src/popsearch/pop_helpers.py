@@ -49,5 +49,10 @@ def create_rank_dict(func, full_list):
     return dic
 
 
+def find_base_node(superpoints):
+    sorted_superpoints = sorted(superpoints, key=lambda x: x[2])
+    return sorted_superpoints[0]
+
+
 if __name__ == "__main__":
     print(rank(lambda x: x, 3, [4, 5, 5, 3, 7]))

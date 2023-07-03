@@ -43,31 +43,21 @@ class Point:
 
         # Incoming edge
         if self.incoming_edge is not None:
-            # print(10 * "-")
-            # print(self, id(self))
-            # print(f"Updating incoming edge {self.incoming_edge}, id: {id(self.incoming_edge)}")
-            # print(
-            #     "point1",
-            #     p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)].point1,
-            #     id(p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)].point1),
-            # )
-            # print(
-            #     f"p_edge_map: { p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)], id(p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)])}"
-            # )
-            # print(10 * "-")
-            self.incoming_edge = p_edge_map[(self.incoming_edge.p1, self.incoming_edge.p2)]
+            self.incoming_edge = p_edge_map[
+                (self.incoming_edge.p1, self.incoming_edge.p2, self.incoming_edge.label)
+            ]
 
         # Outgoing edges
         new_outgoing_edges = []
         for outgoing in self.outgoing_edges:
-            new_outgoing_edges.append(p_edge_map[(outgoing.p1, outgoing.p2)])
+            new_outgoing_edges.append(p_edge_map[(outgoing.p1, outgoing.p2, outgoing.label)])
 
         self.outgoing_edges = new_outgoing_edges
 
         # Neighbour edges
         new_neighbours = []
         for neighbour in self.neighbouring_edges:
-            new_neighbours.append(p_edge_map[(neighbour.p1, neighbour.p2)])
+            new_neighbours.append(p_edge_map[(neighbour.p1, neighbour.p2, neighbour.label)])
 
         self.neighbouring_edges = new_neighbours
 
@@ -256,15 +246,14 @@ class EdgeSkeleton(Edge):
     def update_pred_reference(self, p_edge_map):
         # Update the reference to the predecessor
         if self.predecessor is not None:
-            # print(
-            #     f"updating pred reference to {p_edge_map[(self.predecessor.p1, self.predecessor.p2)]}"
-            # )
-            self.predecessor = p_edge_map[(self.predecessor.p1, self.predecessor.p2)]
+            self.predecessor = p_edge_map[
+                (self.predecessor.p1, self.predecessor.p2, self.predecessor.label)
+            ]
 
     def update_succ_references(self, p_edge_map):
         # Update the reference to the successors
         new_successors = []
         for succ in self.successors:
-            new_successors.append(p_edge_map[(succ.p1, succ.p2)])
+            new_successors.append(p_edge_map[(succ.p1, succ.p2, succ.label)])
 
         self.successors = new_successors

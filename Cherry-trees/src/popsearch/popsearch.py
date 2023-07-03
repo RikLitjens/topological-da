@@ -4,12 +4,11 @@ import random
 from collections import Counter
 from popsearch.skeleton import Skeleton
 from popsearch.skeleton_components import Edge, EdgeSkeleton, Point
-import copy
 
 
 class PopSearch:
     def __init__(self, p_superpoints, raw_edges, p_tree_tips, base_node) -> None:
-        self.K = 20
+        self.K = 5
         self.k_rep = 3
         self.skeletons_k = []  # skeleton pop
         self.p_superpoints = p_superpoints
@@ -17,8 +16,6 @@ class PopSearch:
         self.p_tree_tips = p_tree_tips
         self.base_node = tuple(base_node)
         self.iters_done = 0
-
-        print(self.p_tree_tips)
 
         # Create a dijkstra object for each tree tip
         self.dijkstras = {}
@@ -34,12 +31,15 @@ class PopSearch:
         # Assign a random tree tip to each skeleton
         for skel in self.skeletons_k:
             p_tree_tip = random.choice(self.p_tree_tips)
-            skel.set_tree_tip(p_tree_tip, self.dijkstras[p_tree_tip])
+            skel.set_random_tree_tip(self.p_tree_tips, self.dijkstras)
 
         # todo
         for _ in range(500):
             self.create_next_gen()
             self.iters_done += 1
+            if self.iters_done % 20 == 0:
+                self.skeletons_k[0].plot()
+                # self.skeletons_k[20].plot()
             print(f"Iteration {self.iters_done} done")
 
     def initialize_population(self):
@@ -88,6 +88,7 @@ class PopSearch:
         probabilities = list(weights.values())
 
         chosen = []
+        count = 0
         while len(chosen) != self.K:
             chosen += random.choices(
                 candidate_skel_edge_pairs, weights=probabilities, k=self.K - len(chosen)
@@ -105,13 +106,17 @@ class PopSearch:
                 for _ in range(self.k_rep):
                     chosen.append(vio)
 
+            count += 1
+
+            if count == 50 and len(chosen) > 0:
+                break
+
         # update generation
         self.skeletons_k = []
-        for candidate_pair in chosen:
-            print("Updating this generation")
-            p_tip = random.choice(self.p_tree_tips)
-            new_skel = candidate_pair[0].create_copy(p_tip, self.dijkstras[p_tip])
-            new_skel.include_eligible_edge(candidate_pair[1])
+        print("Updating this generation")
+        for pair in chosen:
+            new_skel = pair[0].create_copy(self.p_tree_tips, self.dijkstras)
+            new_skel.include_eligible_edge(pair[1], self.p_tree_tips)
             self.skeletons_k.append(new_skel)
 
     def get_weights(self):
@@ -122,10 +127,19 @@ class PopSearch:
         ranks_skeleton = create_rank_dict(lambda skel: skel.get_skel_score(), self.skeletons_k)
 
         # define rank_skelly
+        count = 0
         for skel in self.skeletons_k:
             rank_skeleton = ranks_skeleton[skel]
             eligible_edges = skel.get_eligible()
+
             ranks_edges = create_rank_dict(lambda ed: skel.get_potential(ed), eligible_edges)
+            # print("edlible edges")
+            # for ed in eligible_edges:
+            #     print(ed, ranks_edges[ed], skel.get_potential(ed))
+
+            if count == -1:
+                skel.plot([eligible_edges])
+                count += 1
 
             # define edge rank and weights
             for edge in eligible_edges:
@@ -136,6 +150,8 @@ class PopSearch:
                 else:
                     weights[(skel, edge)] += rank_skeleton * rank_edge
 
+            # for item in weights.items():
+            #     print(item)
         # rescale
         total_sum = sum(weights.values())
         rescaled_weights = {key: value / total_sum for key, value in weights.items()}

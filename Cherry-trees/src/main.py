@@ -7,6 +7,7 @@ import os
 from PIL import Image
 from popsearch.skeleton_components import Edge
 from popsearch.popsearch import PopSearch
+from popsearch.pop_helpers import find_base_node
 from popsearch.skeleton import LabelEnum
 from popsearch.mst import *
 from preprocess import clean_up, rotate_z_up
@@ -113,6 +114,13 @@ import pickle
 with open("popsearch_inputs.pickle", "rb") as file:
     super_points, edge_objects, tree_tips, base = pickle.load(file)
 
+for ed in edge_objects:
+    ed.conf = ed.conf.item()
+
+
+base_point = find_base_node(super_points)
+
+
 # Do the pop search
-ps = PopSearch(super_points, edge_objects, tree_tips, base)
+ps = PopSearch(super_points, edge_objects, tree_tips, base_point)
 ps.do_pop_search()
