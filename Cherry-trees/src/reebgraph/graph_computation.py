@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 from helpers import choose_f, dist, get_data_path, load_point_cloud, numpy_to_pcd, visualize_point_cloud, filter_data
 from reebgraph.knn import KD, RT
 from reebgraph.reeb_graph import PointVal, ReebNode
@@ -81,7 +82,7 @@ def connected_components(strip, tau):
     #     components.append(component)
 
     points = np.array(points)
-    components = DBSCAN(eps=tau, min_samples=12, metric='euclidean').fit(points).labels_
+    components = DBSCAN(eps=tau, min_samples=23, metric='euclidean').fit(points).labels_
     j = 0
     all_components = [[]]
     indices = {0 : 0}
@@ -126,7 +127,7 @@ def compute_centroids(components):
 def tau_connected(pcd1, kd2, tau):
     for point in pcd1:
         dist = kd2.closest_neighbor(point)
-        if dist <= tau:
+        if dist <= 2*tau:
             return True
     return False
 
@@ -181,7 +182,12 @@ def find_reeb_nodes(strips, ranges, tau):
     visualize_point_cloud([reeb_total_pcd])
     get_edges(reeb_nodes, tau)
 
-    return reeb_nodes
+    reeb_graph = []
+    for group in reeb_nodes:
+        for node in group:
+            reeb_graph.append(node)
+
+    return reeb_graph
 
 def get_edges(reeb_nodes, tau):
     for i in range(len(reeb_nodes) - 1):
@@ -197,7 +203,7 @@ def get_edges(reeb_nodes, tau):
                 kd = kd_j[k]
                 print(f"In this iteration, node1 has {len(node.get_pointcloud())} points")
                 node_dist = dist(node.get_point(), reeb_nodes[j][k].get_point())
-                if node_dist <= tau + node.get_convex_size() + reeb_nodes[j][k].get_convex_size():
+                if node_dist <= 2*tau + node.get_convex_size() + reeb_nodes[j][k].get_convex_size():
                     if tau_connected(node.get_pointcloud(), kd, tau):
                         node.add_edge(reeb_nodes[j][k])
                         reeb_nodes[j][k].add_edge(node)
@@ -212,3 +218,28 @@ def get_edges(reeb_nodes, tau):
     #                 if tau_connected(node1.get_pointcloud(), node2.get_pointcloud(), tau):
     #                     strip[i].add_edge(strip[j])
     #                     strip[j].add_edge(strip[i])
+
+def plot_reeb(reeb_nodes):
+        # Create a 3D plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+
+        # Plot the vertices
+        vertices = []
+        for vertex in reeb_nodes:
+            x, y, z = vertex.get_point()
+            vertices.append([x, y, z])
+            # ax.scatter(x, y, z, c='r', marker="o")
+            for edge in vertex.adj:
+                x_coords = [vertex.get_point()[0], edge.get_point()[0]]
+                y_coords = [vertex.get_point()[1], edge.get_point()[1]]
+                z_coords = [vertex.get_point()[2], edge.get_point()[2]]
+                ax.plot(x_coords, y_coords, z_coords, c="b")
+        vertices = np.asarray(vertices)
+        ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], c='r', marker="o")
+
+        # Set labels and display the plot
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        plt.show()

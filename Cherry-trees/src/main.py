@@ -1,4 +1,4 @@
-from reebgraph.graph_computation import compute_reeb
+from reebgraph.graph_computation import compute_reeb, plot_reeb
 from super_points import *
 from helpers import *
 from edge_preprocessing import *
@@ -81,5 +81,6 @@ pcd = rotate_z_up(load_point_cloud(local_path, bag_id, "cloud_final"))
 # mst_cut.plot()
 
 
-
-compute_reeb(get_data(pcd), 0.24, 0.03)
+pcd = clean_up(pcd)
+reeb = compute_reeb(get_data(pcd), 0.1, 0.015)
+plot_reeb(reeb)
