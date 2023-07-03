@@ -17,8 +17,8 @@ from strategies import *
 
 
 # Strategy to use
-# strat = "CNN"
-strat = "homology"
+strat = "CNN"
+# strat = "homology"
 # strat = "reeb"
 
 #############################
@@ -72,16 +72,16 @@ if strat == "reeb":
 #     pickle.dump((super_points, edge_objects, tree_tips, tree_tips[0]), file)
 
 # Load the inputs from the pickle file
-with open("popsearch_inputs.pickle", "rb") as file:
-    super_points, edge_objects, tree_tips, base = pickle.load(file)
+# with open("popsearch_inputs.pickle", "rb") as file:
+#     super_points, edge_objects, tree_tips, base = pickle.load(file)
 
-for ed in edge_objects:
-    ed.conf = ed.conf.item()
-
-
-base_point = find_base_node(super_points)
+# for ed in edge_objects:
+#     ed.conf = ed.conf.item()
 
 
-# Do the pop search
-ps = PopSearch(super_points, edge_objects, tree_tips, base_point)
-ps.do_pop_search()
+# base_point = find_base_node(super_points)
+
+
+# # Do the pop search
+# ps = PopSearch(super_points, edge_objects, tree_tips, base_point)
+# ps.do_pop_search()
