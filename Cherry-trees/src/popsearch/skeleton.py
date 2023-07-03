@@ -31,6 +31,7 @@ class Skeleton:
 
         # Tree tip, the point at which the tree ends
         self.tree_tip = None
+        self.dijkstra = None
 
         # Open points are the points at the outer edge of the skeleton
         # Here we ccan attach new edges to grow the skeleton
@@ -313,7 +314,7 @@ class Skeleton:
         """
         return sum([edge.get_reward() for edge in self.included_edges])
 
-    def set_tree_tip(self, p_tree_tip):
+    def set_tree_tip(self, p_tree_tip, dijkstra):
         """
         Sets the tip of the skeleton
         """
@@ -323,33 +324,9 @@ class Skeleton:
             return
 
         self.tree_tip = self.p_to_points_map[p_tree_tip]
+        self.dijkstra = dijkstra
 
-        # Initialize the dijkstra object
-        dijkstra_points = [Point(point.p) for point in self.superpoints]
-        dijkstra_p_to_points_map = {point.p: point for point in dijkstra_points}
-
-        # Make new start point
-        dijkstra_start = dijkstra_p_to_points_map[self.tree_tip.p]
-        dijkstra_start.is_base = True
-
-        # Create dijkstra object
-        self.dijkstra: Dijkstra = Dijkstra(
-            dijkstra_p_to_points_map.values(),
-            [
-                EdgeSkeleton(
-                    Edge(edge.p1, edge.p2, edge.conf, edge.label),
-                    dijkstra_p_to_points_map[edge.p1],
-                    dijkstra_p_to_points_map[edge.p2],
-                )
-                for edge in self.all_edges
-            ],
-            dijkstra_start,
-        )
-
-        # Initialize the dijkstra object
-        self.dijkstra.dijkstra()
-
-    def create_copy(self, p_tree_tip):
+    def create_copy(self, p_tree_tip, dijkstra):
         """
         Creates a full copy of the skeleton in three steps
         1) Create point copies
@@ -412,7 +389,7 @@ class Skeleton:
         ]
 
         # Set Tree tip and initialize dijkstra
-        new_skel.set_tree_tip(p_tree_tip)
+        new_skel.set_tree_tip(p_tree_tip, dijkstra)
 
         # for ed1, ed2 in zip(self.included_edges, new_skel.included_edges):
         #     print(10 * "-")
