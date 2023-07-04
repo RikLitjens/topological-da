@@ -3,7 +3,7 @@ import math
 import numpy as np
 import configparser
 from PIL import Image
-from random import random
+from numpy import random
 import matplotlib.pyplot as plt
 
 def get_data_path():
