@@ -16,8 +16,8 @@ from strategies import *
 
 
 # Strategy to use
-# strat = "CNN"
-strat = "homology"
+strat = "CNN"
+# strat = "homology"
 # strat = "reeb"
 
 #############################

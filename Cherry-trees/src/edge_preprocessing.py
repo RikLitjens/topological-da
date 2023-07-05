@@ -14,10 +14,12 @@ def edge_evaluation(edges, points, clusters, r_super, bag, pcd):
     total_cluster = []
     # Convert points to new coordinate system
     histograms = []
-    pts = pcd.points
+    pts = np.array(pcd.points)
     for k in range(len(edges)):
         n_i = points[edges[k][0]]
         n_j = points[edges[k][1]]
+
+        
 
         # Get clusters for the two points and combine them
         c1 = get_cluster(edges[k][0], clusters, pts)
@@ -33,6 +35,11 @@ def edge_evaluation(edges, points, clusters, r_super, bag, pcd):
 
         for i in range(len(total_cluster)):
             total_cluster[i] = np.matmul(rotation_matrix, total_cluster[i])
+
+        if len(total_cluster) == 0: 
+            print(c1)
+            print(c2)
+            print(total_cluster)
 
         max_x = max(total_cluster[:, 0])
         min_x = min(total_cluster[:, 0])
@@ -94,20 +101,15 @@ def new_coord_system(p_o, p_t, total_cluster):
 def make_greyscale(total_cluster, max_x, min_x, max_y, min_y):
     histogram = np.zeros((32, 16))
     for i in range(len(total_cluster)):
-        greyscale_x = (total_cluster[i][0] - min_x) / (max_x - min_x)
-        greyscale_y = (total_cluster[i][1] - min_y) / (max_y - min_y)
+        greyscale_x = (total_cluster[i][0] - min_x) / (max_x - min_x + 0.00000001)
+        greyscale_y = (total_cluster[i][1] - min_y) / (max_y - min_y + 0.00000001)
 
         if greyscale_x == None:
             print(f"This x_position is {total_cluster[i][0]} but results in NaN")
         if greyscale_y == None:
             print(f"This y_position is {total_cluster[i][1]} but results in NaN")
-        greyscale_x = int(greyscale_x * 32)
-        greyscale_y = int(greyscale_y * 16)
-
-        if greyscale_x > 31:
-            greyscale_x = 31
-        if greyscale_y > 15:
-            greyscale_y = 15
+        greyscale_x = int(greyscale_x * 31)
+        greyscale_y = int(greyscale_y * 15)
 
         histogram[greyscale_x][greyscale_y] += 1
 
