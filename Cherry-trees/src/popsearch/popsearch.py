@@ -4,6 +4,7 @@ import random
 from collections import Counter
 from popsearch.skeleton import Skeleton
 from popsearch.skeleton_components import Edge, EdgeSkeleton, Point
+import concurrent.futures
 
 
 class PopSearch:
@@ -16,7 +17,9 @@ class PopSearch:
         self.p_tree_tips = p_tree_tips
         self.base_node = tuple(base_node)
         self.iters_done = 0
+        self.done = False
 
+        print(f"There are {len(self.p_tree_tips)} tree tips")
         # Create a dijkstra object for each tree tip
         self.dijkstras = {}
 
@@ -35,12 +38,16 @@ class PopSearch:
 
         # todo
         for _ in range(500):
+            if self.done:
+                break
             self.create_next_gen()
             self.iters_done += 1
-            if self.iters_done % 20 == 0:
+            if self.iters_done % 100 == 0:
                 self.skeletons_k[0].plot()
                 # self.skeletons_k[20].plot()
             print(f"Iteration {self.iters_done} done")
+
+        print("Done")
 
     def initialize_population(self):
         for _ in range(self.K):
@@ -87,12 +94,25 @@ class PopSearch:
         candidate_skel_edge_pairs = list(weights.keys())
         probabilities = list(weights.values())
 
+        if len(candidate_skel_edge_pairs) == 0:
+            self.end_popsearch()
+            return
+
         chosen = []
         count = 0
         while len(chosen) != self.K:
-            chosen += random.choices(
-                candidate_skel_edge_pairs, weights=probabilities, k=self.K - len(chosen)
-            )
+            try:
+                chosen += random.choices(
+                    candidate_skel_edge_pairs, weights=probabilities, k=self.K - len(chosen)
+                )
+            except IndexError:
+                print("IndexError")
+                print(chosen)
+                print(candidate_skel_edge_pairs)
+                print(probabilities)
+                print(len(chosen))
+                print(count)
+                raise Exception("Stop")
             counts = Counter(chosen)
 
             # violators (occuring more than k_rep times)
@@ -119,6 +139,17 @@ class PopSearch:
             new_skel.include_eligible_edge(pair[1], self.p_tree_tips)
             self.skeletons_k.append(new_skel)
 
+    def end_popsearch(self):
+        """
+        Return the best skeleton
+        """
+        for skel in sorted(self.skeletons_k, key=lambda skel: skel.get_skel_score(), reverse=True):
+            skel.plot()
+            print(
+                f"The amount of tree tips reached is {len(skel.found_p_tree_tips)} out of {len(self.p_tree_tips)}"
+            )
+        self.done = True
+
     def get_weights(self):
         """
         Create weights as in the paper from the skeleton population
@@ -126,33 +157,25 @@ class PopSearch:
         weights = {}
         ranks_skeleton = create_rank_dict(lambda skel: skel.get_skel_score(), self.skeletons_k)
 
-        # define rank_skelly
-        count = 0
-        for skel in self.skeletons_k:
+        def process_skel(skel):
             rank_skeleton = ranks_skeleton[skel]
             eligible_edges = skel.get_eligible()
 
             ranks_edges = create_rank_dict(lambda ed: skel.get_potential(ed), eligible_edges)
-            # print("edlible edges")
-            # for ed in eligible_edges:
-            #     print(ed, ranks_edges[ed], skel.get_potential(ed))
 
-            if count == -1:
-                skel.plot([eligible_edges])
-                count += 1
-
-            # define edge rank and weights
             for edge in eligible_edges:
                 rank_edge = ranks_edges[edge]
-                # add if double
+
                 if (skel, edge) not in weights:
                     weights[(skel, edge)] = rank_skeleton * rank_edge
                 else:
                     weights[(skel, edge)] += rank_skeleton * rank_edge
 
-            # for item in weights.items():
-            #     print(item)
         # rescale
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            # Submit the process_skel function for each skel in parallel
+            executor.map(process_skel, self.skeletons_k)
+
         total_sum = sum(weights.values())
         rescaled_weights = {key: value / total_sum for key, value in weights.items()}
         return rescaled_weights

@@ -20,8 +20,8 @@ def edge_evaluation(edges, points, clusters, r_super, bag, pcd):
         n_j = points[edges[k][1]]
 
         # Get clusters for the two points and combine them
-        c1 = get_cluster(edges[k][0], clusters, pts)
-        c2 = get_cluster(edges[k][1], clusters, pts)
+        c1 = get_cluster(edges[k][0], clusters, np.asarray(pts))
+        c2 = get_cluster(edges[k][1], clusters, np.asarray(pts))
         total_cluster = union_of_points(c1, c2)
 
         x_axis_new, y_axis_new, z_axis_new = new_coord_system(n_i, n_j, total_cluster)
@@ -34,12 +34,21 @@ def edge_evaluation(edges, points, clusters, r_super, bag, pcd):
         for i in range(len(total_cluster)):
             total_cluster[i] = np.matmul(rotation_matrix, total_cluster[i])
 
+        # Initialize the 32x16 histogram for the CNN and normalize it to 0 - 255 (image color range)
+        if len(total_cluster) <= 1:
+            total_cluster = []
+            print("Skip 1 point cluster")
+            histogram = []
+            for _ in range(32):
+                histogram += [[0] * 16]
+            histograms.append(histogram)
+            continue
+
         max_x = max(total_cluster[:, 0])
         min_x = min(total_cluster[:, 0])
         max_y = max(total_cluster[:, 1])
         min_y = min(total_cluster[:, 1])
 
-        # Initialize the 32x16 histogram for the CNN and normalize it to 0 - 255 (image color range)
         histogram = make_greyscale(total_cluster, max_x, min_x, max_y, min_y)
 
         # store
@@ -60,7 +69,7 @@ def get_edges(points, r_super):
     # Define the edges
     for i in range(len(points)):
         for j in range(i + 1, len(points)):
-            if dist(points[i], points[j]) <= 2 * r_super:
+            if dist(points[i], points[j]) <= 4 * r_super:
                 edges.append([i, j])
                 # edges.append([j, i])
 

@@ -135,6 +135,13 @@ class Skeleton:
         if candidate_edge.point2 in self.open_points or candidate_edge.point2 in self.closed_points:
             return True
 
+        # Only go to tip once
+        if (
+            candidate_edge.point2.p in self.found_p_tree_tips
+            or candidate_edge.point1.p in self.found_p_tree_tips
+        ):
+            return True
+
         return False
 
     def violates_label_topology(self, candidate_edge: EdgeSkeleton):
@@ -281,6 +288,9 @@ class Skeleton:
         """
         Skel score is the optimization goal value
         """
+        # + len(
+        #     self.found_p_tree_tips
+        # )
         return sum([edge.get_reward() for edge in self.included_edges])
 
     def set_random_tree_tip(self, p_tree_tips, dijkstras):

@@ -57,7 +57,7 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
 
     # TODO: Create the tree based on constraints
 
-    mst_cut_tree, _ = cut_tree(super_points, edge_list, 0.6)
+    mst_cut_tree, _ = cut_tree(super_points, edge_list, 0.3)
     tree_tips = mst_cut_tree.find_tree_tips()
 
     # Do the pop search

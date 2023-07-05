@@ -64,6 +64,9 @@ class Point:
     def __eq__(self, other):
         if isinstance(other, Point):
             return self.p == other.p
+        else:
+            print("Not a point!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
         return False
 
     def __hash__(self) -> int:
