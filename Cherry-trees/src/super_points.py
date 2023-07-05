@@ -47,22 +47,6 @@ def get_super_points(data, radius):
             if distance <= radius:
                 cluster_indices.append(c)
         
-        # for c, candidate_point in enumerate(masked_data[sample_index+1:]):
-        #     if c != sample_index:
-        #         distance = dist(current_point, candidate_point)
-        #         if distance <= radius:
-        #             cluster_indices.append(sample_index+c+1)
-        #         if abs(current_point[0]-candidate_point[0]) > radius:
-        #             break
-
-        # for c, candidate_point in enumerate(masked_data[sample_index-1:-1]):
-        #     if c != sample_index:
-        #         distance = dist(current_point, candidate_point)
-        #         if distance <= radius:
-        #             cluster_indices.append(sample_index-c-1)
-        #         if abs(current_point[0]-candidate_point[0]) > radius:
-        #             break
-        
         counter -= len(cluster_indices)
 
         
