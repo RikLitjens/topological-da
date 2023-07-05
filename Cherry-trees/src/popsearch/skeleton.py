@@ -415,16 +415,10 @@ class Skeleton:
             10: "red",
         }
         for edge in self.included_edges:
-            print(
-                "I am painting an edge with label",
-                edge.label,
-                "and color",
-                color_mapping.get(edge.label, "k"),
-            )
             x_coords = [edge.p1[0], edge.p2[0]]
             y_coords = [edge.p1[1], edge.p2[1]]
             z_coords = [edge.p1[2], edge.p2[2]]
-            c = color_mapping.get(edge.label, "k")
+            c = "black"
             ax.plot(x_coords, y_coords, z_coords, c=c)
 
         for edge in eligible:

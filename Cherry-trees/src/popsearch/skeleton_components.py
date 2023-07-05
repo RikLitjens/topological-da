@@ -137,7 +137,7 @@ class Edge:
         return edge_length
 
     def __str__(self) -> str:
-        return f"<<Edge {self.point1}-{self.point2}, conf={self.conf}, label={self.label}>>"
+        return f"<<Edge {self.p1}-{self.p2}, conf={self.conf}, label={self.label}>>"
 
     def __repr__(self) -> str:
         return self.__str__()

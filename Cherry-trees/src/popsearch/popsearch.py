@@ -42,12 +42,9 @@ class PopSearch:
                 break
             self.create_next_gen()
             self.iters_done += 1
-            if self.iters_done % 100 == 0:
-                self.skeletons_k[0].plot()
-                # self.skeletons_k[20].plot()
             print(f"Iteration {self.iters_done} done")
 
-        print("Done")
+        print("Finished pop search")
 
     def initialize_population(self):
         for _ in range(self.K):

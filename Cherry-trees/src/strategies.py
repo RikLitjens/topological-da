@@ -8,8 +8,9 @@ from deepnet.net_main import *
 from popsearch.mst import *
 from operator import itemgetter
 from reebgraph.graph_computation import compute_reeb, plot_reeb
+import time
 
-def strat_CNN(pcd, prepped_model=None, bag_id=0):
+def strat_CNN(pcd, prepped_model=False, bag_id=0):
     """
     Strategy for a calculating the skeleton with a CNN
     This is the baseline strategy
@@ -19,6 +20,7 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
         prepped_model: boolean, whether or not there already exists a model
         bag_id: int, the bag id of the point cloud
     """
+    start = time.time()
 
     # Calculate the superpoints and corresponding clusters
     clusters, super_points = get_super_points(get_data(pcd), 0.1)
@@ -30,7 +32,7 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
     edge_histograms = edge_evaluation(edges, super_points, clusters, 0.1, bag_id, pcd)
 
     # Create the CNN model if none is provided
-    if prepped_model is None:
+    if not prepped_model:
         make_model()
 
     # Load the CNN model
@@ -40,10 +42,13 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
 
     # Calculate the edge confidences
     X = torch.tensor(edge_histograms).reshape(-1, 1, 32, 16).float()
-    edge_confidences = model(X)
+    edge_confidences = model(X).detach().numpy()
+
+    time2ec = time.time() - start
 
     # convert to edge class
     edge_list = build_edge_list(edge_confidences, edges, super_points)
+    # visualize_edge_confidences(edge_list, super_points, name="cnn_edge_conf")
 
     # Create the graph
     G = Graph(super_points, edge_list)
@@ -55,14 +60,14 @@ def strat_CNN(pcd, prepped_model=None, bag_id=0):
     lengths = [len(c) for c in cc]
     lowest = min(cc[np.argmax(lengths)], key=itemgetter(2))
 
-    # TODO: Create the tree based on constraints
-
     mst_cut_tree, _ = cut_tree(super_points, edge_list, 0.3)
     tree_tips = mst_cut_tree.find_tree_tips()
 
     # Do the pop search
     ps = PopSearch(super_points, edge_list, tree_tips, base_node=lowest)
     ps.do_pop_search()
+    total_time = time.time() - start
+    print(f"time to edge confidence = {time2ec} total time = {total_time}")
 
 
 def strat_persistent_homology(pcd):
@@ -72,6 +77,7 @@ def strat_persistent_homology(pcd):
     Args:
         pcd: open3d point cloud
     """
+    start = time.time()
     # Calculate the superpoints and corresponding clusters
     clusters, super_points = get_super_points(get_data(pcd), 0.1)
 
@@ -81,8 +87,10 @@ def strat_persistent_homology(pcd):
     # Calculate the edge confidences
     edge_conf = calc_edge_confidences(pcd, clusters, edges)
 
+    time2ec = time.time() - start
     # Convert to edge class
     edge_list = build_edge_list(edge_conf, edges, super_points)
+    # visualize_edge_confidences(edge_list, super_points, name="homology_edge_conf")
 
     # Create the graph
     G = Graph(super_points, edge_list)
@@ -94,13 +102,15 @@ def strat_persistent_homology(pcd):
     lengths = [len(c) for c in cc]
     lowest = min(cc[np.argmax(lengths)], key=itemgetter(2))
 
-    # TODO: Create the tree based on constraints
     mst_cut_tree, _ = cut_tree(super_points, edge_list, 0.6)
     tree_tips = mst_cut_tree.find_tree_tips()
 
     # Do the pop search
     ps = PopSearch(super_points, edge_list, tree_tips, base_node=lowest)
     ps.do_pop_search()
+
+    total_time = time.time() - start
+    print(f"time to edge confidence = {time2ec} total time = {total_time}")
 
 
 def strat_reeb_graph(pcd):

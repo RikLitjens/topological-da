@@ -18,7 +18,8 @@ import argparse
 
 # Create the argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('--method', type=str)
+parser.add_argument('--method', type=str, default="cnn")
+parser.add_argument('--bag', type=int, default=0)
 
 
 if __name__ == '__main__':
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     bag_id = 0
 
     # Load the point cloud
-    pcd = load_point_cloud(local_path, bag_id, "cloud_final")
+    pcd = load_point_cloud(local_path, args.bag, "cloud_final")
     pcd = rotate_z_up(pcd)
     pcd = clean_up(pcd)
 

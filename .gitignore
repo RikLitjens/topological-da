@@ -8,6 +8,7 @@ bin/
 pyvenv.cfg
 share/
 etc/
+figures/
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,pycharm
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode,pycharm

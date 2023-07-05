@@ -6,6 +6,7 @@ import configparser
 from PIL import Image
 from numpy import random
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 
 def get_data_path():
@@ -50,23 +51,38 @@ def visualize_point_cloud_scatter(pcd):
     ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], c='r', marker='o')
     plt.show()
 
-def visualize_edge_confidences(pcd, edges, edge_confidences, super_points):
-    _edges = np.array(edges)
-    e = super_points[_edges]
+def visualize_edge_confidences(edge_list, super_points, name="edge_conf"):
+
+    cmap = cm.get_cmap('summer')
 
     fig = plt.figure()
     ax = fig.add_subplot(projection="3d")
-    ax.scatter3D(super_points[:, 0], super_points[0:, 1], super_points[:, 2], c="green")
-    for i, l in enumerate(e):
-        p1, p2 = l
+    ax.scatter3D(super_points[:, 0], super_points[0:, 1], super_points[:, 2], c="red", s=2)    
+    
+    for i, e in enumerate(edge_list):
         ax.plot(
-            [p1[0], p2[0]],
-            [p1[1], p2[1]],
-            [p1[2], p2[2]],
-            color=(edge_confidences[i], edge_confidences[i], edge_confidences[i]),
+            [e.p1[0], e.p2[0]],
+            [e.p1[1], e.p2[1]],
+            [e.p1[2], e.p2[2]],
+            color=cmap(1-e.conf),
         )
 
-    plt.show()
+    ax.set_title("Top view")
+    ax.view_init(elev=90, azim=-90)
+    plt.savefig(f'figures/{name}_top.png', bbox_inches='tight', dpi=300)
+
+    ax.set_title("Front view")
+    ax.view_init(elev=0, azim=-90)
+    plt.savefig(f'figures/{name}_front.png', bbox_inches='tight',dpi=300)
+
+    ax.set_title("Side view")
+    ax.view_init(elev=0, azim=0)
+    plt.savefig(f'figures/{name}_side.png', bbox_inches='tight',dpi=300)
+
+    plt.figure().clear()
+    plt.close()
+    plt.cla()
+    plt.clf()
 
 
 def save_histogram_examples(edge_histograms, edge_confidences):
