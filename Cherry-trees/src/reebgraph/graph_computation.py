@@ -3,7 +3,6 @@ from helpers import choose_f, dist, get_data_path, load_point_cloud, numpy_to_pc
 from reebgraph.knn import KD, RT
 from reebgraph.reeb_graph import PointVal, ReebNode
 from sklearn.cluster import DBSCAN
-import open3d as o3d
 import numpy as np
 from preprocess import rotate_z_up
 
@@ -26,7 +25,7 @@ def compute_reeb(pcd, strip_size, tau):
         strip_pcd = numpy_to_pcd(vis_list)
         strip_pcd.paint_uniform_color([i % 2, 0, (i + 1) % 2])
         strip_pcds.append(strip_pcd)
-    visualize_point_cloud(strip_pcds)
+    # visualize_point_cloud(strip_pcds)
 
     reeb_nodes = find_reeb_nodes(strips, ranges, tau)
     
@@ -97,13 +96,6 @@ def connected_components(strip, tau):
         if len(component) > 5:
             final_components.append(component)
     
-    # pcd_list = []
-    # for component in final_components:
-    #     comp_pcd = numpy_to_pcd(component)
-    #     pcd_list.append(comp_pcd)
-    # for i in range(len(pcd_list)):
-    #     pcd_list[i].paint_uniform_color([(len(pcd_list) - i) / len(pcd_list), 0, i / len(pcd_list)])
-    # visualize_point_cloud(pcd_list)
     return final_components, compute_centroids(final_components)
 
 def compute_centroids(components):
@@ -160,26 +152,10 @@ def find_reeb_nodes(strips, ranges, tau):
                 ps.append([x, y, z])
                 ps_row.append([x, y, z])
                 ps_total.append([x, y, z])
-            # ps = np.asarray(ps)
-            # ps = numpy_to_pcd(ps)
-            # ps.paint_uniform_color([1, 0, 0])
-            # reeb_point = np.asarray([reeb_point])
-            # reeb_node = numpy_to_pcd(reeb_point)
-            # reeb_node.paint_uniform_color([0, 1, 0])
-            # visualize_point_cloud([ps, reeb_node])
-        # print(len(ps_row))
-        # ps_row = filter_data(ps_row, 0.85)
-        # print(len(ps_row))
-        # # ps_row = np.asarray(ps_row)
-        # ps_pcd = numpy_to_pcd(ps_row)
-        # reeb_pcd = numpy_to_pcd(reeb_points)
-        # ps_pcd.paint_uniform_color([1, 0, 0])
-        # reeb_pcd.paint_uniform_color([0, 1, 0])
-        # visualize_point_cloud([ps_pcd, reeb_pcd])
 
     reeb_total = np.asarray(reeb_total)
     reeb_total_pcd = numpy_to_pcd(reeb_total)
-    visualize_point_cloud([reeb_total_pcd])
+    # visualize_point_cloud([reeb_total_pcd])
     get_edges(reeb_nodes, tau)
 
     reeb_graph = []
@@ -208,17 +184,6 @@ def get_edges(reeb_nodes, tau):
                         node.add_edge(reeb_nodes[j][k])
                         reeb_nodes[j][k].add_edge(node)
 
-    # for strip in reeb_nodes:
-    #     print("Another strip visited")
-    #     for i in range(len(strip)):
-    #         for j in range(len(strip)):
-    #             if i != j:
-    #                 node1 = strip[i]
-    #                 node2 = strip[j]
-    #                 if tau_connected(node1.get_pointcloud(), node2.get_pointcloud(), tau):
-    #                     strip[i].add_edge(strip[j])
-    #                     strip[j].add_edge(strip[i])
-
 def plot_reeb(reeb_nodes):
         # Create a 3D plot
         fig = plt.figure()
@@ -234,12 +199,22 @@ def plot_reeb(reeb_nodes):
                 x_coords = [vertex.get_point()[0], edge.get_point()[0]]
                 y_coords = [vertex.get_point()[1], edge.get_point()[1]]
                 z_coords = [vertex.get_point()[2], edge.get_point()[2]]
-                ax.plot(x_coords, y_coords, z_coords, c="b")
+                ax.plot(x_coords, y_coords, z_coords, c="black")
         vertices = np.asarray(vertices)
-        ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], c='r', marker="o")
+        ax.scatter(vertices[:, 0], vertices[:, 1], vertices[:, 2], c='red', marker="o", s=2)
 
         # Set labels and display the plot
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")
-        plt.show()
+        ax.set_title("Top view")
+        ax.view_init(elev=90, azim=-90)
+        plt.savefig(f'figures/reeb_top.png', bbox_inches='tight', dpi=300)
+
+        ax.set_title("Front view")
+        ax.view_init(elev=0, azim=-90)
+        plt.savefig(f'figures/reeb_front.png', bbox_inches='tight',dpi=300)
+
+        ax.set_title("Side view")
+        ax.view_init(elev=0, azim=0)
+        plt.savefig(f'figures/reeb_side.png', bbox_inches='tight',dpi=300)

@@ -120,7 +120,8 @@ def strat_reeb_graph(pcd):
     Args:
         pcd: open3d point cloud
     """
-    
+    start = time.time()
     reeb = compute_reeb(get_data(pcd), 0.1, 0.015)
     plot_reeb(reeb)
+    print(f"total time = {time.time()-start}")
 
