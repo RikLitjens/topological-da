@@ -97,8 +97,8 @@ def union_of_points(cluster1, cluster2):
 
     """
     union = np.vstack((cluster1, cluster2))
-    x = int(union.shape[0] * 0.25)
-    sampled = union[random.choice(union.shape[0], x, replace=False), :]
+    x = max(min(union.shape[0], 50), int(union.shape[0] * 0.25))
+    sampled = union[random.choice(union.shape[0], size=x, replace=False), :]
     return sampled
 
 
