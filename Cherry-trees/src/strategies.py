@@ -7,7 +7,7 @@ from deepnet.neuralnet import *
 from deepnet.net_main import *
 from popsearch.mst import *
 from operator import itemgetter
-
+from reebgraph.graph_computation import compute_reeb, plot_reeb
 
 def strat_CNN(pcd, prepped_model=None, bag_id=0):
     """
@@ -110,4 +110,7 @@ def strat_reeb_graph(pcd):
     Args:
         pcd: open3d point cloud
     """
-    pass
+    
+    reeb = compute_reeb(get_data(pcd), 0.1, 0.015)
+    plot_reeb(reeb)
+

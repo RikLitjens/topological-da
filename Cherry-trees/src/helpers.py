@@ -22,23 +22,16 @@ def load_point_cloud(local_path, bag_id, pointcloud_name):
 
 
 def visualize_point_cloud(pcd):
-<<<<<<< HEAD
     """Visualizes a point cloud."""
-    coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=[0, 0, 0])
-    geometries = [pcd, coord_frame]
-    o3d.visualization.draw_geometries(
-        geometries,
-        zoom=0.455,
-        front=[-0.4999, -0.1659, -0.8499],
-        lookat=[2.1813, 2.0619, 2.0999],
-        up=[0.1204, -0.9852, 0.1215],
-    )
-=======
-    # o3d.visualization.draw_geometries(pcd, 
-    #                                   zoom=0.3412, 
-    #                                   front=[0.4257, -0.2125, -0.8795], 
-    #                                   lookat=[0, 0, 0], 
-    #                                   up=[0.4694, -0.9768, 0.2024]
+    # coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=[0, 0, 0])
+    # geometries = [pcd, coord_frame]
+    # o3d.visualization.draw_geometries(
+    #     geometries,
+    #     zoom=0.455,
+    #     front=[-0.4999, -0.1659, -0.8499],
+    #     lookat=[2.1813, 2.0619, 2.0999],
+    #     up=[0.1204, -0.9852, 0.1215],
+    # )
     
     viewer = o3d.visualization.Visualizer()
     viewer.create_window()
@@ -49,7 +42,6 @@ def visualize_point_cloud(pcd):
     opt.background_color = np.asarray([0.3, 0.3, 0.3])
     viewer.run()
     viewer.destroy_window()
->>>>>>> origin/reeb-graph
 
 def visualize_point_cloud_scatter(pcd):
     fig = plt.figure()
