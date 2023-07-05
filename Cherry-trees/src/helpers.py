@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import open3d as o3d
 import math
 import numpy as np
@@ -21,6 +22,7 @@ def load_point_cloud(local_path, bag_id, pointcloud_name):
 
 
 def visualize_point_cloud(pcd):
+<<<<<<< HEAD
     """Visualizes a point cloud."""
     coord_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=1.0, origin=[0, 0, 0])
     geometries = [pcd, coord_frame]
@@ -31,7 +33,30 @@ def visualize_point_cloud(pcd):
         lookat=[2.1813, 2.0619, 2.0999],
         up=[0.1204, -0.9852, 0.1215],
     )
+=======
+    # o3d.visualization.draw_geometries(pcd, 
+    #                                   zoom=0.3412, 
+    #                                   front=[0.4257, -0.2125, -0.8795], 
+    #                                   lookat=[0, 0, 0], 
+    #                                   up=[0.4694, -0.9768, 0.2024]
+    
+    viewer = o3d.visualization.Visualizer()
+    viewer.create_window()
+    for geometry in pcd:
+        viewer.add_geometry(geometry)
+    opt = viewer.get_render_option()
+    opt.show_coordinate_frame = True
+    opt.background_color = np.asarray([0.3, 0.3, 0.3])
+    viewer.run()
+    viewer.destroy_window()
+>>>>>>> origin/reeb-graph
 
+def visualize_point_cloud_scatter(pcd):
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+
+    ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], c='r', marker='o')
+    plt.show()
 
 def visualize_edge_confidences(pcd, edges, edge_confidences, super_points):
     _edges = np.array(edges)
@@ -105,3 +130,15 @@ def union_of_points(cluster1, cluster2):
 def get_cluster(cluster_id, clusters, points):
     mask = np.where(clusters == cluster_id)
     return points[mask]
+def choose_f():
+    def f(x, y, z):
+        return z
+    return f
+
+def filter_data(data, percentage):
+    """Filters a row with a probability of {percentage}"""
+    filtered_data = []
+    for row in data:
+        if np.random.random() > percentage:
+            filtered_data.append(row)
+    return np.asarray(filtered_data)
