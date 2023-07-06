@@ -48,7 +48,7 @@ def strat_CNN(pcd, prepped_model=False, bag_id=0):
 
     # convert to edge class
     edge_list = build_edge_list(edge_confidences, edges, super_points)
-    # visualize_edge_confidences(edge_list, super_points, name="cnn_edge_conf")
+    visualize_edge_confidences(edge_list, super_points, name="cnn_edge_conf")
 
     # Create the graph
     G = Graph(super_points, edge_list)
@@ -90,7 +90,7 @@ def strat_persistent_homology(pcd):
     time2ec = time.time() - start
     # Convert to edge class
     edge_list = build_edge_list(edge_conf, edges, super_points)
-    # visualize_edge_confidences(edge_list, super_points, name="homology_edge_conf")
+    visualize_edge_confidences(edge_list, super_points, name="homology_edge_conf")
 
     # Create the graph
     G = Graph(super_points, edge_list)

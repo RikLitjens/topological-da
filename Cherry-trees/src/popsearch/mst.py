@@ -97,7 +97,7 @@ class Graph:
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")
-        # plt.show()
+        plt.show()
 
     def find_connected_components(self, with_edges=True):
         representation = {tuple(vertex): [] for vertex in self.vertices}

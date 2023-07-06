@@ -49,7 +49,7 @@ def visualize_point_cloud_scatter(pcd):
     ax = fig.add_subplot(projection='3d')
 
     ax.scatter(pcd[:, 0], pcd[:, 1], pcd[:, 2], c='r', marker='o')
-    # plt.show()
+    plt.show()
 
 def visualize_edge_confidences(edge_list, super_points, name="edge_conf"):
 

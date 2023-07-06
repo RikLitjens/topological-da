@@ -433,7 +433,7 @@ class Skeleton:
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")
 
-        # plt.show()
+        plt.show()
 
     def __eq__(self, other) -> bool:
         return self.included_edges == other.included_edges
