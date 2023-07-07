@@ -1,0 +1,10 @@
+matplotlib==3.7.1
+numpy==1.25.0
+open3d==0.17.0
+Pillow==10.0.0
+ripser==0.6.4
+Rtree==1.0.1
+rtreelib==0.2.0
+scikit_learn==1.2.2
+torch==2.0.1
+tqdm==4.65.0
